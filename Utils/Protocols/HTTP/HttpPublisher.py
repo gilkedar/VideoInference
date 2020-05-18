@@ -1,10 +1,9 @@
 import socket
 from Utils.Settings import Config
 
+class HttpPublisher:
 
-class MqttPublisher:
-
-    def __init__(self, ip, port=Config.ZMQ_DEFAULT_PORT):
+    def __init__(self, ip, port=Config.HTTP_DEFAULT_PORT):
         self.ip = ip
         self.port = port
 
