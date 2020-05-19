@@ -12,15 +12,14 @@ ALGORITHM_DETECT_FACES = "detect_faces"
 ALGORITHM_DETECT_OBJECTS = "detect_objects"
 ALGORITHM_IS_SANTA = "is_santa"
 
-# ZMQ Parameters
-ZMQ_DEFAULT_IP = "127.0.0.1"
-ZMQ_DEFAULT_PORT = 5555
+# Algorithms Models Path
+MODEL_PATH_IS_SANTA_ALGORITHM = "/path/to/bucket"
+
+# MQTT Parameters
+MQTT_TOPIC_NAME = "videoInferenceTopic"
 
 # HTTP Parameters
 HTTP_DEFAULT_PORT = "80"
-
-# Message Parameters
-MESSAGE_SEPARATOR = "-"
 
 # Input parameters
 INPUT_PARAM_VIDEO_FILE_NAME = "videofile"

@@ -1,9 +1,8 @@
 import argparse
 from Utils.Settings import Config
 from Server.ResponsesManager import ResponsesManager
-from Utils.Protocols.MQTT.MqttSubscriber import MqttSubscriber
-from Utils.Protocols.HTTP.HttpSubscriber import HttpSubscriber
-from Utils.Protocols.ZMQ.ZmqSubscriber import ZmqSubscriber
+from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
+from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageSubscriber
 from Utils.Exceptions.Errors import ErrorInvalidProtocolChoice
 
 # construct the argument parser and parse the arguments
@@ -44,11 +43,9 @@ class MainServer:
 
     def initSubscriber(self):
         if self.image_transport_protocol == Config.PROTOCOL_ZMQ:
-            self.requests_subscriber = ZmqSubscriber(self.vhandleIncomingRequests)
-        elif self.image_transport_protocol == Config.PROTOCOL_MQTT:
-            self.requests_subscriber = MqttSubscriber(self.handleIncomingRequests)
+            self.requests_subscriber = ZmqImageSubscriber(self.response_manager.handleIncomingRequests)
         elif self.image_transport_protocol == Config.PROTOCOL_HTTP:
-            self.requests_subscriber = HttpSubscriber(self.handleIncomingRequests)
+            self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleIncomingRequests)
         else:
             raise ErrorInvalidProtocolChoice(self.image_transport_protocol)
 

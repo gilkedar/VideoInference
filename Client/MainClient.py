@@ -2,7 +2,6 @@ import argparse
 import os
 
 from Utils.Settings import Config
-from Utils.Settings import Config
 from Utils.Exceptions.Errors import ErrorInvalidInputVideoPath
 from Utils.Exceptions.Errors import ErrorInvalidInputAlgorithmChoice
 from Utils.Exceptions.Errors import ErrorInvalidProtocolChoice
@@ -10,9 +9,8 @@ from Utils.Exceptions.Errors import ErrorInvalidProtocolChoice
 from Client.RequestsManager import RequestsManager
 from Client.VideoPlayer import VideoPlayer
 
-from Utils.Protocols.ZMQ.ZmqPublisher import ZmqPublisher
-from Utils.Protocols.MQTT.MqttPublisher import MqttPublisher
-from Utils.Protocols.HTTP.HttpPublisher import HttpPublisher
+from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImagePublisher import ZmqImagePublisher
+from Utils.Infrastructure.ImageProtocols.HTTP.HttpImagePublisher import HttpImagePublisher
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -73,28 +71,28 @@ class MainClient:
             self.image_transport_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
 
     def initResources(self):
-        self.requests_manager = RequestsManager()
+        self.requests_manager = RequestsManager(self.image_transport_protocol, self.desired_algorithm)
         self.video_player = VideoPlayer(self.video_file_path)
-        self.initPublisher()
+        self.initImagePublisher()
 
-    def initPublisher(self):
+    def initImagePublisher(self):
         if self.image_transport_protocol == Config.PROTOCOL_ZMQ:
-            self.requests_publisher = ZmqPublisher(self.server_ip)
-        elif self.image_transport_protocol == Config.PROTOCOL_MQTT:
-            self.requests_publisher = MqttPublisher(self.server_ip)
+            self.requests_publisher = ZmqImagePublisher(self.server_ip)
         elif self.image_transport_protocol == Config.PROTOCOL_HTTP:
-            self.requests_publisher = HttpPublisher(self.server_ip)
+            self.requests_publisher = HttpImagePublisher(self.server_ip)
         else:
             raise ErrorInvalidProtocolChoice(self.image_transport_protocol)
 
     def run(self):
         # Open video source
         self.video_player.openSource()
+        self.requests_manager.startListeningToIncomingResponses()
+
         while not self.video_player.finished:
             # Read frame by frame
             img = self.video_player.getNextFrame()
             # generate relevant request
-            req_msg = self.requests_manager.addRequest(img, self.desired_algorithm)
+            req_msg = self.requests_manager.generateRequest(img)
             # publish request
             self.requests_publisher.publish(req_msg)
 

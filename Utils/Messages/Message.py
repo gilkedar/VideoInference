@@ -2,16 +2,11 @@
 class Message:
 
     def __init__(self):
-        self.data = None
-        # self.client_send_time = None
-        # self.server_receive_time = None
-        # self.server_send_time = None
-        # self.client_receive_time = None
-        # self.full_duration = 0
+        self.message_id = 0
+        self.send_time = None
+        self.receive_time = None
 
-    def serialize(self):
+    def setMessageId(self):
         pass
 
-    def deserialize(self):
-        pass
 

@@ -1,19 +1,18 @@
 from Utils.Helpers.Singleton import Singleton
-from Utils.Messages.Requests.RequestMessage import RequestMessage
-from Utils.Settings import Config
+from Utils.Messages.Requests.ImageRequestMessage import ImageRequestMessage
 
 
 class RequestsMessageFactory(metaclass=Singleton):
 
-    message_id = 0
+    request_id = 0
 
     def __init__(self):
         pass
 
     @staticmethod
-    def createRequest(image,algorithm_name):
-        RequestsMessageFactory.message_id += 1
-        request_id = RequestsMessageFactory.message_id
-        return RequestMessage(request_id,image,algorithm_name)
+    def createImageRequest(image,algorithm_name):
+        RequestsMessageFactory.request_id += 1
+        request_id = RequestsMessageFactory.request_id
+        return ImageRequestMessage(request_id,algorithm_name, image)
 
 
