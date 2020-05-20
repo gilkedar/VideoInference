@@ -11,11 +11,11 @@ class ResponsesManager:
 
     def __init__(self):
         self.inference_manager = None
-        self.requests_publisher = None
+        self.response_publisher = None
 
     def initResources(self):
         self.inference_manager = InferenceManager()
-        self.requests_publisher = MqttDataPublisher(Config.MQTT_TOPIC_NAME)
+        self.response_publisher = MqttDataPublisher(Config.MQTT_TOPIC_NAME)
 
     def addRequest(self,request_msg):
         # @TODO add mutex to open_requests object
@@ -26,12 +26,14 @@ class ResponsesManager:
         del ResponsesManager.open_requests[request_id]
 
     def publishResponse(self,response):
-        self.requests_publisher.publish(response)
+        self.response_publisher.publish(response)
 
-    def handleIncomingRequests(self, request_message):
+    def handleNewRequest(self, request_message):
 
+        self.addRequest(request_message.request_id)
         desired_algorithm_name = request_message.algorithm
         algorithm = self.inference_manager.getAlgorithmInstanceFromName(desired_algorithm_name)
         ans = algorithm.run(request_message.data)
         response_message = algorithm.generateResponseMessage(request_message,ans)
         self.publishResponse(response_message)
+        self.removeRequest(response_message.request_id)

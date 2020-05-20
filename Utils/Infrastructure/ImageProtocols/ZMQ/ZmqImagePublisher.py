@@ -12,7 +12,8 @@ class ZmqImagePublisher(ImagePublisher):
         self.ip = ip
         self.port = port
         self.address = "{}://{}:{}".format(tcp_udp, ip, port)
-
+        self.req_rep = req_rep
+        self.tcp_udp = tcp_udp
         self.publisher = imagezmq.ImageSender(connect_to=self.address, REQ_REP=req_rep)
 
     def publish(self,message):

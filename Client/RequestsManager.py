@@ -8,8 +8,7 @@ class RequestsManager:
     # holds requests objects by request_id
     open_requests = {}
 
-    def __init__(self, image_protocol, algorithm):
-        self.image_protocol = image_protocol
+    def __init__(self, algorithm):
         self.algorithm = algorithm
 
         self.listen_flag = False
@@ -17,7 +16,10 @@ class RequestsManager:
         self.factory = None
 
     def initResources(self):
+        # Instantiate the factory singleton
         self.factory = RequestsMessageFactory()
+
+        # @Todo - check other data publishers if necessary and receive this option as input
         self.response_subscriber = MqttDataSubscriber(self.handleIncomingResponses)
 
     def startListeningToIncomingResponses(self):

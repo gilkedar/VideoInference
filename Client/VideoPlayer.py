@@ -6,10 +6,12 @@ class VideoPlayer:
     def __init__(self,video_path):
 
         self.file_path = video_path
+
         self.frame_id = 0
         self.source = None
-        self.openSource()
         self.finished = False
+
+        self.openSource()
 
     def openSource(self):
         pass

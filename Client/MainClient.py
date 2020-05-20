@@ -36,7 +36,7 @@ class MainClient:
         self.input_params = input_params
 
         self.server_ip = None
-        self.image_transport_protocol = None
+        self.image_protocol = None
         self.desired_algorithm = None
         self.video_file_path = None
 
@@ -47,6 +47,7 @@ class MainClient:
         # self.readServerParameters() @TODO - add routine to read info from DB
         self.setInputParams(input_params)
         self.initResources()
+        self.initImagePublisher()
 
     def setInputParams(self,params):
         algorithm_name = params[Config.INPUT_PARAM_ALGORITHM_NAME]
@@ -68,20 +69,24 @@ class MainClient:
 
         # validate image protocol
         if Config.INPUT_PARAM_PROTOCOL_NAME in params:
-            self.image_transport_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
+            self.image_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
+
+        # validate image protocol
+        if Config.INPUT_PARAM_PROTOCOL_NAME in params:
+            self.image_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
+
 
     def initResources(self):
-        self.requests_manager = RequestsManager(self.image_transport_protocol, self.desired_algorithm)
+        self.requests_manager = RequestsManager(self.desired_algorithm)
         self.video_player = VideoPlayer(self.video_file_path)
-        self.initImagePublisher()
 
     def initImagePublisher(self):
-        if self.image_transport_protocol == Config.PROTOCOL_ZMQ:
+        if self.image_protocol == Config.PROTOCOL_ZMQ:
             self.requests_publisher = ZmqImagePublisher(self.server_ip)
-        elif self.image_transport_protocol == Config.PROTOCOL_HTTP:
+        elif self.image_protocol == Config.PROTOCOL_HTTP:
             self.requests_publisher = HttpImagePublisher(self.server_ip)
         else:
-            raise ErrorInvalidProtocolChoice(self.image_transport_protocol)
+            raise ErrorInvalidProtocolChoice(self.image_protocol)
 
     def run(self):
         # Open video source

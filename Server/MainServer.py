@@ -21,7 +21,7 @@ class MainServer:
         self.input_params = params
 
         self.response_manager = None
-        self.image_transport_protocol = None
+        self.image_protocol = None
         self.requests_subscriber = None
 
         self.setInputParams(params)
@@ -39,15 +39,15 @@ class MainServer:
 
         # validate image protocol
         if Config.INPUT_PARAM_PROTOCOL_NAME in params:
-            self.image_transport_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
+            self.image_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
 
     def initSubscriber(self):
-        if self.image_transport_protocol == Config.PROTOCOL_ZMQ:
-            self.requests_subscriber = ZmqImageSubscriber(self.response_manager.handleIncomingRequests)
-        elif self.image_transport_protocol == Config.PROTOCOL_HTTP:
-            self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleIncomingRequests)
+        if self.image_protocol == Config.PROTOCOL_ZMQ:
+            self.requests_subscriber = ZmqImageSubscriber(self.response_manager.handleNewRequest)
+        elif self.image_protocol == Config.PROTOCOL_HTTP:
+            self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleNewRequest)
         else:
-            raise ErrorInvalidProtocolChoice(self.image_transport_protocol)
+            raise ErrorInvalidProtocolChoice(self.image_protocol)
 
     def run(self):
         self.requests_subscriber.subscribe()
