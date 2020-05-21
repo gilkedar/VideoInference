@@ -20,3 +20,4 @@ class Algorithm:
     def generateResponseMessage(self, input_msg, ans):
         request_id = input_msg.request_id
         return ImageResponseMessage(request_id=request_id, algorithm=self.name, ans=ans)
+

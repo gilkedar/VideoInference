@@ -5,9 +5,10 @@ import threading
 
 class ZmqImageSubscriber(ImageSubscriber):
 
-    def __init__(self, callback_function,queue=10):
-        ImageSubscriber.__init__(self,ZmqImageProtocol, callback_function,queue)
-        self.imageHub = imagezmq.ImageHub()
+    def __init__(self, ip, callback_function,queue=10):
+        ImageSubscriber.__init__(self,ZmqImageProtocol(), callback_function, queue)
+        self.ip = ip
+        self.imageHub = imagezmq.ImageHub(open_port="tcp://{}:5555".format(self.ip), REQ_REP=False)
 
     def subscribe(self):
         self.listen_flag = True
@@ -17,4 +18,4 @@ class ZmqImageSubscriber(ImageSubscriber):
             (text, image) = self.imageHub.recv_image()
             msg = self.protocol.decodeMessage(text, image)
             print(msg)
-            threading.Thread(self.callback_function, args=(msg, )).start()
+            threading.Thread(target=self.callback_function, args=(msg, )).start()

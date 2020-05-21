@@ -1,6 +1,6 @@
 
 #localHost
-LOCALHOST_IP = "localhost"
+LOCALHOST_IP = "127.0.0.1"
 
 # Image Protocol
 PROTOCOL_HTTP = "http"
