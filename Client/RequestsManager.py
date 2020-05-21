@@ -1,7 +1,6 @@
 from Utils.Messages.RequestsMessageFactory import RequestsMessageFactory
-from Utils.Helpers.FrameEditor import FrameEditor
-from Utils.Helpers.VideoPlayer import VideoPlayer
-from Utils.Infrastructure.DataProtocols.MQTT.MqttDataSubscriber import MqttDataSubscriber
+from Utils.Helpers.Video.FrameEditor import FrameEditor
+from Utils.Helpers.Video.VideoPlayer import VideoPlayer
 from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageSubscriber # @TODO- Remove this
 from Utils.Settings import Config
 import threading
