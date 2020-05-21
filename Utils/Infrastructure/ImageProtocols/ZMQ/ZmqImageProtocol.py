@@ -18,7 +18,8 @@ class ZmqImageProtocol(ImageProtocol):
 
         :return: (text, image) tuple
         """
-        return
+        text = "{}-{}".format(image_request.request_id, image_request.algorithm)
+        return text, image_request.data
 
     def decodeMessage(self, text, image):
         """
@@ -28,4 +29,4 @@ class ZmqImageProtocol(ImageProtocol):
         :return: ImageRequestMessage
         """
         request_id, algorithm = text.split(ZmqImageProtocol.TEXT_SEPARATOR)
-        return ImageRequestMessage(request_id, algorithm,image)
+        return ImageRequestMessage(int(request_id), algorithm, image)

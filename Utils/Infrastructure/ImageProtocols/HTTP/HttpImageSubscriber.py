@@ -15,5 +15,4 @@ class HttpImageSubscriber(ImageSubscriber):
         while self.listen_flag:
             (text, image) = None, None
             msg = self.protocol.decodeMessage(text, image)
-            print(msg)
             threading.Thread(self.callback_function, args=(msg,)).start()

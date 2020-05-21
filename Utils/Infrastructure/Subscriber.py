@@ -8,3 +8,9 @@ class Subscriber:
         self.queue = queue
 
         self.listen_flag = False
+
+    def subscribe(self):
+        pass
+
+    def stopListening(self):
+        self.listen_flag = False

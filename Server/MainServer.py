@@ -3,7 +3,7 @@ from Utils.Settings import Config
 from Server.ResponsesManager import ResponsesManager
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
 from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageSubscriber
-from Utils.Exceptions.Errors import ErrorInvalidProtocolChoice
+from Utils.Exceptions.InputErrors.Errors import ErrorInvalidProtocolChoice
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()

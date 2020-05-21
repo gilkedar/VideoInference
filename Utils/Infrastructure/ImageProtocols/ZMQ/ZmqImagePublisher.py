@@ -8,7 +8,7 @@ import imagezmq
 class ZmqImagePublisher(ImagePublisher):
 
     def __init__(self, ip=Config.LOCALHOST_IP, port=5555, req_rep=False, tcp_udp="tcp"):
-        ImagePublisher.__init__(self, ZmqImageProtocol)
+        ImagePublisher.__init__(self, ZmqImageProtocol())
         self.ip = ip
         self.port = port
         self.address = "{}://{}:{}".format(tcp_udp, ip, port)
@@ -16,6 +16,8 @@ class ZmqImagePublisher(ImagePublisher):
         self.tcp_udp = tcp_udp
         self.publisher = imagezmq.ImageSender(connect_to=self.address, REQ_REP=req_rep)
 
-    def publish(self,message):
+    def publish(self, message):
 
-        self.publisher.send_image(self.protocol.encodeMessage(message))
+        text, image = self.protocol.encodeMessage(message)
+        self.publisher.send_image(text, image)
+        print("Sent image id : {}".format(message.request_id))

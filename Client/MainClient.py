@@ -1,13 +1,14 @@
 import argparse
 import os
-
+import threading
 from Utils.Settings import Config
-from Utils.Exceptions.Errors import ErrorInvalidInputVideoPath
-from Utils.Exceptions.Errors import ErrorInvalidInputAlgorithmChoice
-from Utils.Exceptions.Errors import ErrorInvalidProtocolChoice
+from Utils.Exceptions.InputErrors.Errors import ErrorInvalidInputVideoPath
+from Utils.Exceptions.InputErrors.Errors import ErrorInvalidInputAlgorithmChoice
+from Utils.Exceptions.InputErrors.Errors import ErrorInvalidProtocolChoice
 
 from Client.RequestsManager import RequestsManager
-from Client.VideoPlayer import VideoPlayer
+from Utils.Helpers.Video.VideoFileFrameExtractor import VideoFileFrameExtractor
+from Utils.Helpers.Video.DriverFrameExtractor import DriverFrameExtractor
 
 from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImagePublisher import ZmqImagePublisher
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImagePublisher import HttpImagePublisher
@@ -18,7 +19,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-a", "--algorithm", required=True, type=str,
                 help="Desired deep Learning algorithm to get inference from cloud resources")
 
-ap.add_argument("-f", "--videofile", required=False,type=str, default=None,
+ap.add_argument("-f", "--videofile", required=False,type=str,
                 help="Full Path to desired video file. If no path chosen, read from camera driver")
 
 ap.add_argument("-i", "--ip", required=False, type=str, default=Config.LOCALHOST_IP,
@@ -29,6 +30,7 @@ ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PRO
 
 input_arguments = vars(ap.parse_args())
 
+# add "-f C:\Users\gilke\GitHubProjects\VideoInference\Tests\VideoTestFile\soccer.mp4" input param to run video file
 
 class MainClient:
 
@@ -41,44 +43,56 @@ class MainClient:
         self.video_file_path = None
 
         self.requests_manager = None
-        self.video_player = None
+        self.frame_extractor = None
         self.requests_publisher = None
 
+        self.condition_received_all_requests = threading.Condition()
+
+    def initResources(self):
+        self.validateInputParams()
         # self.readServerParameters() @TODO - add routine to read info from DB
-        self.setInputParams(input_params)
-        self.initResources()
+        self.requests_manager = RequestsManager(self.desired_algorithm,self.condition_received_all_requests)
         self.initImagePublisher()
 
-    def setInputParams(self,params):
-        algorithm_name = params[Config.INPUT_PARAM_ALGORITHM_NAME]
+        if self.video_file_path:
+            self.frame_extractor = VideoFileFrameExtractor(self.video_file_path)
+        else:
+            self.frame_extractor = DriverFrameExtractor()
 
-        # validate video path
-        if Config.INPUT_PARAM_VIDEO_FILE_NAME in params:
-            self.video_file_path = params[Config.INPUT_PARAM_VIDEO_FILE_NAME]
-            if not os.path.exists(self.video_file_path):
-                raise ErrorInvalidInputVideoPath(self.video_file_path)
+    def closeResources(self):
+        self.requests_manager.closeResources()
+        self.requests_manager = None
+        self.requests_publisher = None
+        self.frame_extractor.closeSource()
+        self.frame_extractor = None
 
+    def validateInputParams(self):
+        self.validateAlgorithmInput()
+        self.validateImageProtocolInput()
+        self.validateIpAddressInput()
+        self.validateVideoPathInput()
+
+    def validateAlgorithmInput(self):
+        algorithm_name = self.input_params[Config.INPUT_PARAM_ALGORITHM_NAME]
         # validate algorithm name
         if algorithm_name != Config.ALGORITHM_IS_SANTA:
             raise ErrorInvalidInputAlgorithmChoice(algorithm_name)
         self.desired_algorithm = algorithm_name
 
-        # validate ip address
-        if Config.INPUT_PARAM_IP_ADDRESS_NAME in params:
-            self.server_ip = params[Config.INPUT_PARAM_IP_ADDRESS_NAME]
-
-        # validate image protocol
-        if Config.INPUT_PARAM_PROTOCOL_NAME in params:
-            self.image_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
-
-        # validate image protocol
-        if Config.INPUT_PARAM_PROTOCOL_NAME in params:
-            self.image_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
+    def validateVideoPathInput(self):
+        self.video_file_path = self.input_params[Config.INPUT_PARAM_VIDEO_FILE_NAME]
+        # validate video path
+        if self.video_file_path:
+            if not os.path.exists(self.video_file_path):
+                raise ErrorInvalidInputVideoPath(self.video_file_path)
 
 
-    def initResources(self):
-        self.requests_manager = RequestsManager(self.desired_algorithm)
-        self.video_player = VideoPlayer(self.video_file_path)
+    def validateIpAddressInput(self):
+        self.server_ip = self.input_params[Config.INPUT_PARAM_IP_ADDRESS_NAME]
+
+    def validateImageProtocolInput(self):
+
+        self.image_protocol = self.input_params[Config.INPUT_PARAM_PROTOCOL_NAME]
 
     def initImagePublisher(self):
         if self.image_protocol == Config.PROTOCOL_ZMQ:
@@ -88,22 +102,40 @@ class MainClient:
         else:
             raise ErrorInvalidProtocolChoice(self.image_protocol)
 
+    def publishRequest(self,req_msg):
+        self.requests_publisher.publish(req_msg)
+
+    def notifyEndOfFrames(self):
+        print("Finished sending all frames")
+        self.requests_manager.setEndOfFrames()
+
     def run(self):
-        # Open video source
-        self.video_player.openSource()
+        # initialize client resources
+        self.initResources()
+        # start listening
         self.requests_manager.startListeningToIncomingResponses()
 
-        while not self.video_player.finished:
+        while True:
             # Read frame by frame
-            img = self.video_player.getNextFrame()
-            # generate relevant request
-            req_msg = self.requests_manager.generateRequest(img)
-            # publish request
-            self.requests_publisher.publish(req_msg)
+            frame_id, frame = self.frame_extractor.getNextFrame()
 
-        pass
+            if self.frame_extractor.finished:
+                break
+            # generate relevant request
+            req_msg = self.requests_manager.generateRequestMessage(frame_id,frame)
+            # publish request
+            self.publishRequest(req_msg)
+
+
+
+        self.notifyEndOfFrames()
+        print("Waiting for all requests")
+        with self.condition_received_all_requests:
+            self.condition_received_all_requests.wait()
+        print("Finished all requests")
 
 
 if __name__ == "__main__":
     main_client = MainClient(input_arguments)
     main_client.run()
+    main_client.closeResources()
