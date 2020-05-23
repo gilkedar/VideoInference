@@ -1,4 +1,5 @@
 import argparse
+import os
 from Utils.Settings import Config
 from Server.ResponsesManager import ResponsesManager
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
@@ -24,32 +25,37 @@ class MainServer:
         self.image_protocol = None
         self.requests_subscriber = None
 
-        self.setInputParams(params)
+        self.validateInputParams(params)
         self.initResources()
 
+    def readEnvVariables(self):
+        Config.MQTT_SERVER_IP = os.getenv(Config.ENV_VAR_MQTT_TOKEN)
 
     def initResources(self):
+
+        self.readEnvVariables()
         # initialize response manager
         self.response_manager = ResponsesManager()
 
         # connect to request subscriber
-        self.initSubscriber()
+        self.initImageSubscriber()
 
-    def setInputParams(self, params):
+    def validateInputParams(self, params):
 
         # validate image protocol
         if Config.INPUT_PARAM_PROTOCOL_NAME in params:
             self.image_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
 
-    def initSubscriber(self):
+    def initImageSubscriber(self):
         if self.image_protocol == Config.PROTOCOL_ZMQ:
-            self.requests_subscriber = ZmqImageSubscriber(self.response_manager.handleNewRequest)
+            self.requests_subscriber = ZmqImageSubscriber(Config.LOCALHOST_IP, self.response_manager.handleNewRequest)
         elif self.image_protocol == Config.PROTOCOL_HTTP:
             self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleNewRequest)
         else:
             raise ErrorInvalidProtocolChoice(self.image_protocol)
 
     def run(self):
+        print("Listening to incoming image requests...")
         self.requests_subscriber.subscribe()
 
 

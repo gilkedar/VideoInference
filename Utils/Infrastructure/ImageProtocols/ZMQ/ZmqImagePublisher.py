@@ -17,7 +17,7 @@ class ZmqImagePublisher(ImagePublisher):
         self.publisher = imagezmq.ImageSender(connect_to=self.address, REQ_REP=req_rep)
 
     def publish(self, message):
-
-        text, image = self.protocol.encodeMessage(message)
-        self.publisher.send_image(text, image)
-        print("Sent image id : {}".format(message.request_id))
+        with self.lock:
+            text, image = self.protocol.encodeMessage(message)
+            self.publisher.send_image(text, image)
+            print("zmqImagePub Sent image id : {}".format(message.request_id))

@@ -17,5 +17,4 @@ class ZmqImageSubscriber(ImageSubscriber):
 
             (text, image) = self.imageHub.recv_image()
             msg = self.protocol.decodeMessage(text, image)
-            print(msg)
             threading.Thread(target=self.callback_function, args=(msg, )).start()

@@ -1,4 +1,7 @@
 
+# Environment Variables
+ENV_VAR_MQTT_TOKEN = "MQTT_TOKEN_IP"
+
 #localHost
 LOCALHOST_IP = "127.0.0.1"
 
@@ -16,7 +19,8 @@ ALGORITHM_IS_SANTA = "is_santa"
 MODEL_PATH_IS_SANTA_ALGORITHM = "/path/to/bucket"
 
 # MQTT Parameters
-MQTT_TOPIC_NAME = "videoInferenceTopic"
+MQTT_TOPIC_NAME = "videoInference"
+MQTT_SERVER_IP = ""  # will be set from env var
 
 # HTTP Parameters
 HTTP_DEFAULT_PORT = "80"
