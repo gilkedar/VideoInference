@@ -1,8 +1,9 @@
 from Utils.Messages.RequestsMessageFactory import RequestsMessageFactory
 from Utils.Helpers.Video.FrameEditor import FrameEditor
 from Utils.Helpers.Video.VideoPlayer import VideoPlayer
-from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageSubscriber # @TODO- Remove this
+from Utils.Infrastructure.DataProtocols.MQTT.MqttDataSubscriber import MqttDataSubscriber
 from Utils.Settings import Config
+
 import threading
 import time
 
@@ -24,6 +25,8 @@ class RequestsManager:
         self.video_player = None
         self.end_of_frames = False
 
+        self.requests_lock = threading.Lock()
+
         self.initResources()
 
     def initResources(self):
@@ -31,11 +34,12 @@ class RequestsManager:
         self.factory = RequestsMessageFactory()
         self.frame_editor = FrameEditor()
         self.video_player = VideoPlayer()
-        self.response_subscriber = ZmqImageSubscriber(Config.LOCALHOST_IP, self.handleIncomingResponses) # @Todo - Remove this
+        self.initResponseDataSubscriber()
 
-    def initResponseSubscriber(self):
-        # @Todo - check other data publishers if necessary and receive this option as input
-        # self.response_subscriber = MqttDataSubscriber(self.handleIncomingResponses)
+    def initResponseDataSubscriber(self):
+
+        self.response_subscriber = MqttDataSubscriber(Config.MQTT_TOPEN_IP, Config.MQTT_TOPIC_NAME, self.handleIncomingResponses)
+        # self.response_subscriber = ZmqImageSubscriber(Config.LOCALHOST_IP, self.handleIncomingResponses)
         pass
 
     def closeResources(self):
@@ -58,13 +62,13 @@ class RequestsManager:
         return request_msg
 
     def addRequest(self,request_msg):
-        # @TODO add mutex to open_requests object
-        RequestsManager.open_requests[request_msg.request_id] = request_msg
-
+        with self.requests_lock:
+            RequestsManager.open_requests[request_msg.request_id] = request_msg
+            print(" + Adding request : {}".format(request_msg.request_id))
     def removeRequest(self,request_id):
-        # @TODO add mutex to open_requests object
-        print(RequestsManager.open_requests)
-        del RequestsManager.open_requests[request_id]
+        with self.requests_lock:
+            del RequestsManager.open_requests[request_id]
+            print(" - Removing request : {}".format(request_id))
 
     def setEndOfFrames(self):
         self.end_of_frames = True
@@ -82,7 +86,7 @@ class RequestsManager:
         # analyze delivery time
 
         # print output
-        print("Received message id: {}".format(message.request_id))
+        print("Response for request id: {} - {}".format(message.request_id, message.ans))
 
         # close request
         self.removeRequest(message.request_id)

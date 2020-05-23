@@ -16,7 +16,7 @@ ALGORITHM_IS_SANTA = "is_santa"
 MODEL_PATH_IS_SANTA_ALGORITHM = "/path/to/bucket"
 
 # MQTT Parameters
-MQTT_TOPIC_NAME = "videoInferenceTopic"
+MQTT_TOPIC_NAME = "videoInference"
 
 # HTTP Parameters
 HTTP_DEFAULT_PORT = "80"
