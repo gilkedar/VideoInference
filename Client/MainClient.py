@@ -48,7 +48,11 @@ class MainClient:
 
         self.condition_received_all_requests = threading.Condition()
 
+    def readEnvVariables(self):
+        Config.MQTT_SERVER_IP = os.environ[Config.ENV_VAR_MQTT_TOKEN]
+
     def initResources(self):
+        self.readEnvVariables()
         self.validateInputParams()
         # self.readServerParameters() @TODO - add routine to read info from DB
         self.requests_manager = RequestsManager(self.desired_algorithm,self.condition_received_all_requests)
@@ -125,7 +129,6 @@ class MainClient:
             req_msg = self.requests_manager.generateRequestMessage(frame_id,frame)
             # publish request
             self.publishRequest(req_msg)
-
 
 
         self.notifyEndOfFrames()

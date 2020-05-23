@@ -1,4 +1,5 @@
 import argparse
+import os
 from Utils.Settings import Config
 from Server.ResponsesManager import ResponsesManager
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
@@ -27,8 +28,12 @@ class MainServer:
         self.validateInputParams(params)
         self.initResources()
 
+    def readEnvVariables(self):
+        Config.MQTT_SERVER_IP = os.getenv(Config.ENV_VAR_MQTT_TOKEN)
 
     def initResources(self):
+
+        self.readEnvVariables()
         # initialize response manager
         self.response_manager = ResponsesManager()
 

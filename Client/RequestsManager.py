@@ -38,7 +38,7 @@ class RequestsManager:
 
     def initResponseDataSubscriber(self):
 
-        self.response_subscriber = MqttDataSubscriber(Config.MQTT_TOPEN_IP, Config.MQTT_TOPIC_NAME, self.handleIncomingResponses)
+        self.response_subscriber = MqttDataSubscriber(Config.MQTT_SERVER_IP, Config.MQTT_TOPIC_NAME, self.handleIncomingResponses)
         # self.response_subscriber = ZmqImageSubscriber(Config.LOCALHOST_IP, self.handleIncomingResponses)
         pass
 

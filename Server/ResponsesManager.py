@@ -18,7 +18,7 @@ class ResponsesManager:
 
     def initResources(self):
         self.inference_manager = InferenceManager()
-        self.response_publisher = MqttDataPublisher(Config.MQTT_TOPEN_IP, Config.MQTT_TOPIC_NAME)
+        self.response_publisher = MqttDataPublisher(Config.MQTT_SERVER_IP, Config.MQTT_TOPIC_NAME)
 
     def addRequest(self,request_msg):
         with self.requests_lock:
