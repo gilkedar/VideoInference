@@ -1,11 +1,14 @@
-from Utils.Messages.RequestsMessageFactory import RequestsMessageFactory
-from Utils.Helpers.Video.FrameEditor import FrameEditor
-from Utils.Helpers.Video.VideoPlayer import VideoPlayer
-from Utils.Infrastructure.DataProtocols.MQTT.MqttDataSubscriber import MqttDataSubscriber
-from Utils.Settings import Config
-
 import threading
 import time
+
+from Utils.Messages.RequestsMessageFactory import RequestsMessageFactory
+from Utils.Infrastructure.DataProtocols.MQTT.MqttDataSubscriber import MqttDataSubscriber
+from Utils.Helpers.Video.FrameEditor import FrameEditor
+from Utils.Helpers.Video.VideoPlayer import VideoPlayer
+from Utils.Helpers.TimerManager import TimerManager
+from Utils.Helpers.Timers.RequestTimer import RequestMessageTimer
+from Utils.Helpers.Logger import Logger
+from Utils.Settings import Config
 
 
 class RequestsManager:
@@ -19,38 +22,30 @@ class RequestsManager:
         self.condition_all_requests_answered = end_condition_variable
 
         self.listen_flag = False
-        self.response_subscriber = None
-        self.factory = None
-        self.frame_editor = None
-        self.video_player = None
         self.end_of_frames = False
 
+        self.logger = Logger(self.__class__.__name__)
         self.requests_lock = threading.Lock()
-
-        self.initResources()
-
-    def initResources(self):
-        # Instantiate the factory singleton
+        self.timer_manager = TimerManager()
         self.factory = RequestsMessageFactory()
         self.frame_editor = FrameEditor()
         self.video_player = VideoPlayer()
-        self.initResponseDataSubscriber()
 
-    def initResponseDataSubscriber(self):
-
-        self.response_subscriber = MqttDataSubscriber(Config.MQTT_SERVER_IP, Config.MQTT_TOPIC_NAME, self.handleIncomingResponses)
-        # self.response_subscriber = ZmqImageSubscriber(Config.LOCALHOST_IP, self.handleIncomingResponses)
-        pass
+        self.response_subscriber = MqttDataSubscriber(Config.MQTT_SERVER_IP,
+                                                      Config.MQTT_TOPIC_NAME,
+                                                      self.handleIncomingResponses)
 
     def closeResources(self):
         self.response_subscriber = None
         self.factory = None
         self.video_player = None
         self.frame_editor = None
+        self.timer_manager.printTimers()
+        self.timer_manager = None
 
     def startListeningToIncomingResponses(self):
         threading.Thread(target=self.response_subscriber.subscribe).start()
-        time.sleep(0.5)  # to stabalize subscriber
+        time.sleep(0.5)  # to stabilize subscriber
         pass
 
     def getFrame(self,frame_id):
@@ -64,11 +59,14 @@ class RequestsManager:
     def addRequest(self,request_msg):
         with self.requests_lock:
             RequestsManager.open_requests[request_msg.request_id] = request_msg
-            print(" + Adding request : {}".format(request_msg.request_id))
-    def removeRequest(self,request_id):
+            self.logger.info("Adding request : {}".format(request_msg.request_id))
+            self.timer_manager.startMessageTimer(RequestMessageTimer(request_msg.request_id))
+
+    def removeRequest(self, request_id):
         with self.requests_lock:
+            self.timer_manager.stopMessageTimer(request_id)
             del RequestsManager.open_requests[request_id]
-            print(" - Removing request : {}".format(request_id))
+            self.logger.info("Removing request : {}".format(request_id))
 
     def setEndOfFrames(self):
         self.end_of_frames = True
@@ -85,8 +83,8 @@ class RequestsManager:
 
         # analyze delivery time
 
-        # print output
-        print("Response for request id: {} - {}".format(message.request_id, message.ans))
+        # handle algorithm results - for now just log for testing
+        self.logger.info("Response for request id: {} - {}".format(message.request_id, message.ans))
 
         # close request
         self.removeRequest(message.request_id)

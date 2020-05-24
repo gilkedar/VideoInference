@@ -1,10 +1,17 @@
 import argparse
 import os
+import atexit
+
 from Utils.Settings import Config
+from Utils.Helpers.Logger import Logger
+
 from Server.ResponsesManager import ResponsesManager
+
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
 from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageSubscriber
+
 from Utils.Exceptions.InputErrors.Errors import ErrorInvalidProtocolChoice
+from Utils.Exceptions.InputErrors.Errors import ErrorEnvVarNotSet
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -15,36 +22,45 @@ ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PRO
 input_arguments = vars(ap.parse_args())
 
 
-
 class MainServer:
 
     def __init__(self, params):
         self.input_params = params
 
-        self.response_manager = None
         self.image_protocol = None
+
+        self.response_manager = None
         self.requests_subscriber = None
 
-        self.validateInputParams(params)
-        self.initResources()
+        self.logger = Logger(self.__class__.__name__)
 
-    def readEnvVariables(self):
-        Config.MQTT_SERVER_IP = os.getenv(Config.ENV_VAR_MQTT_TOKEN)
+    def closeResources(self):
+        self.requests_subscriber = None
+        self.response_manager.closeResources()
+        self.response_manager = None
+
+    def validateEnvVariables(self):
+        if Config.ENV_VAR_MQTT_TOKEN not in os.environ:
+            raise ErrorEnvVarNotSet(Config.ENV_VAR_MQTT_TOKEN)
+        Config.MQTT_SERVER_IP = os.environ[Config.ENV_VAR_MQTT_TOKEN]
 
     def initResources(self):
-
-        self.readEnvVariables()
+        # validate input parameters
+        self.validateInputParams()
         # initialize response manager
         self.response_manager = ResponsesManager()
-
         # connect to request subscriber
         self.initImageSubscriber()
 
-    def validateInputParams(self, params):
+        atexit.register(self.closeResources)
+
+    def validateInputParams(self):
+        # validate environmental Variables are set
+        self.validateEnvVariables()
 
         # validate image protocol
-        if Config.INPUT_PARAM_PROTOCOL_NAME in params:
-            self.image_protocol = params[Config.INPUT_PARAM_PROTOCOL_NAME]
+        if Config.INPUT_PARAM_PROTOCOL_NAME in self.input_params:
+            self.image_protocol = self.input_params[Config.INPUT_PARAM_PROTOCOL_NAME]
 
     def initImageSubscriber(self):
         if self.image_protocol == Config.PROTOCOL_ZMQ:
@@ -55,11 +71,16 @@ class MainServer:
             raise ErrorInvalidProtocolChoice(self.image_protocol)
 
     def run(self):
-        print("Listening to incoming image requests...")
+        self.logger.info("Initializing Resources...")
+        self.initResources()
+        self.logger.info("Ready for incoming requests...")
         self.requests_subscriber.subscribe()
 
 
 if __name__ == "__main__":
     main_server = MainServer(input_arguments)
-    main_server.run()
-
+    try:
+        main_server.run()
+    except Exception as ex:
+        print(ex)
+    main_server.closeResources()

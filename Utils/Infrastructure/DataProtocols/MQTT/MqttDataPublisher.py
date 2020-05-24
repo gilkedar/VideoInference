@@ -19,7 +19,6 @@ class MqttDataPublisher(DataPublisher):
             self.channel.basic_publish(exchange='',
                                   routing_key=self.topic,
                                   body=self.protocol.encodeMessage(message))
-            # print("Sent message via mqtt : {}".format(message.request_id))
 
     def close(self):
         self.connection.close()

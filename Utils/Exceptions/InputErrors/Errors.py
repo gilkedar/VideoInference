@@ -26,3 +26,10 @@ class ErrorInvalidProtocolChoice(Exception):
         print("Invalid Protocol Chosen : {}".format(self.protocol))
 
 
+class ErrorEnvVarNotSet(Exception):
+
+    def __init__(self, param):
+        self.param = param
+
+    def message(self):
+        print("Missing Environment Variable : {}".format(self.param))

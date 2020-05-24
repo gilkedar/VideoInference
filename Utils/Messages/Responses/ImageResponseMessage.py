@@ -1,7 +1,7 @@
-from Utils.Messages.Responses.ResponseMessage import ResponsetMessage
+from Utils.Messages.Responses.ResponseMessage import ResponseMessage
 
 
-class ImageResponseMessage(ResponsetMessage):
+class ImageResponseMessage(ResponseMessage):
 
     def __init__(self, request_id, algorithm, ans):
-        ResponsetMessage.__init__(self, request_id=request_id, algorithm=algorithm, ans=ans)
+        ResponseMessage.__init__(self, request_id=request_id, algorithm=algorithm, ans=ans)

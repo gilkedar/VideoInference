@@ -1,6 +1,9 @@
+import time
+
 from Utils.Algorithms.Algorithm import Algorithm
 
 from Utils.Settings import Config
+
 
 class IsSantaAlgorithm(Algorithm):
 
@@ -8,5 +11,7 @@ class IsSantaAlgorithm(Algorithm):
         Algorithm.__init__(self, name=Config.ALGORITHM_IS_SANTA, model_path=model_path)
 
     def run(self, model_input):
+        time.sleep(0.5)
         ans = True  # @TODO - run true prediction for image
         return ans
+

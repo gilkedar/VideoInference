@@ -1,4 +1,7 @@
 
+# Project
+PROJECT_NAME = "VideoInference"
+
 # Environment Variables
 ENV_VAR_MQTT_TOKEN = "MQTT_TOKEN_IP"
 

@@ -1,10 +1,14 @@
 import argparse
 import os
 import threading
+
 from Utils.Settings import Config
+from Utils.Helpers.Logger import Logger
+
 from Utils.Exceptions.InputErrors.Errors import ErrorInvalidInputVideoPath
 from Utils.Exceptions.InputErrors.Errors import ErrorInvalidInputAlgorithmChoice
 from Utils.Exceptions.InputErrors.Errors import ErrorInvalidProtocolChoice
+from Utils.Exceptions.InputErrors.Errors import ErrorEnvVarNotSet
 
 from Client.RequestsManager import RequestsManager
 from Utils.Helpers.Video.VideoFileFrameExtractor import VideoFileFrameExtractor
@@ -32,6 +36,7 @@ input_arguments = vars(ap.parse_args())
 
 # add "-f C:\Users\gilke\GitHubProjects\VideoInference\Tests\VideoTestFile\soccer.mp4" input param to run video file
 
+
 class MainClient:
 
     def __init__(self, input_params):
@@ -47,16 +52,20 @@ class MainClient:
         self.requests_publisher = None
 
         self.condition_received_all_requests = threading.Condition()
+        self.logger = Logger(self.__class__.__name__)
 
-    def readEnvVariables(self):
+    def validateEnvVariables(self):
+        if Config.ENV_VAR_MQTT_TOKEN not in os.environ:
+            raise ErrorEnvVarNotSet(Config.ENV_VAR_MQTT_TOKEN)
         Config.MQTT_SERVER_IP = os.environ[Config.ENV_VAR_MQTT_TOKEN]
 
     def initResources(self):
-        self.readEnvVariables()
+        self.validateEnvVariables()
         self.validateInputParams()
-        # self.readServerParameters() @TODO - add routine to read info from DB
-        self.requests_manager = RequestsManager(self.desired_algorithm,self.condition_received_all_requests)
         self.initImagePublisher()
+        # self.readServer-Parameters() @TODO - add routine to read info from DB
+
+        self.requests_manager = RequestsManager(self.desired_algorithm,self.condition_received_all_requests)
 
         if self.video_file_path:
             self.frame_extractor = VideoFileFrameExtractor(self.video_file_path)
@@ -95,7 +104,6 @@ class MainClient:
         self.server_ip = self.input_params[Config.INPUT_PARAM_IP_ADDRESS_NAME]
 
     def validateImageProtocolInput(self):
-
         self.image_protocol = self.input_params[Config.INPUT_PARAM_PROTOCOL_NAME]
 
     def initImagePublisher(self):
@@ -107,17 +115,21 @@ class MainClient:
             raise ErrorInvalidProtocolChoice(self.image_protocol)
 
     def publishRequest(self,req_msg):
+        # self.logger.info("Publishing request : {}".format(req_msg.request_id))
         self.requests_publisher.publish(req_msg)
 
     def notifyEndOfFrames(self):
-        print("Finished sending all frames")
+        self.logger.info("Finished sending all frames to server")
         self.requests_manager.setEndOfFrames()
 
     def run(self):
         # initialize client resources
+        self.logger.info("Initializing Client Resources...")
         self.initResources()
+
         # start listening
         self.requests_manager.startListeningToIncomingResponses()
+        self.logger.info("Client starting to publish frames...")
 
         while True:
             # Read frame by frame
@@ -132,10 +144,10 @@ class MainClient:
 
 
         self.notifyEndOfFrames()
-        print("Waiting for all requests")
+        self.logger.info("Waiting for all requests to arrive...")
         with self.condition_received_all_requests:
             self.condition_received_all_requests.wait()
-        print("Finished all requests")
+        self.logger.info("Finished all requests...Shutting down client...")
 
 
 if __name__ == "__main__":

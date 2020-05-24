@@ -19,7 +19,6 @@ class MqttDataSubscriber(DataSubscriber):
     def subscribe(self):
 
         self.channel.basic_consume(queue=self.topic, auto_ack=True, on_message_callback=self.mqtt_callback)
-        print("start subscribe mqtt ")
         self.channel.start_consuming()
 
     def mqtt_callback(self,ch,method,properties,body):
