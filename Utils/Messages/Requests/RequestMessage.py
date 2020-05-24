@@ -1,5 +1,5 @@
-
 from Utils.Messages.Message import Message
+
 
 class RequestMessage(Message):
 
@@ -9,6 +9,5 @@ class RequestMessage(Message):
         self.algorithm = algorithm
         self.data = data
 
-        self.request_start_time = None
-        self.request_end_time = None
+
 

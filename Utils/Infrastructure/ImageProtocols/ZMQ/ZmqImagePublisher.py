@@ -20,4 +20,3 @@ class ZmqImagePublisher(ImagePublisher):
         with self.lock:
             text, image = self.protocol.encodeMessage(message)
             self.publisher.send_image(text, image)
-            print("zmqImagePub Sent image id : {}".format(message.request_id))

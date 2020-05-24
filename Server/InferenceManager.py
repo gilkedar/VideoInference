@@ -3,6 +3,7 @@ from Utils.Algorithms.DetectObjectsAlgorithm import DetectObjectsAlgorithm
 from Utils.Algorithms.IsSantaAlgorithm import IsSantaAlgorithm
 from Utils.Algorithms.Algorithm import Algorithm
 from Utils.Settings import Config
+from Utils.Helpers.Logger import Logger
 
 
 class InferenceManager:
@@ -10,6 +11,8 @@ class InferenceManager:
     def __init__(self):
 
         self.is_santa_algorithm = IsSantaAlgorithm(Config.MODEL_PATH_IS_SANTA_ALGORITHM)
+
+        self.logger = Logger(self.__class__.__name__)
 
     @staticmethod
     def loadAlgorithms():
