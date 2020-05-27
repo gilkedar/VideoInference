@@ -4,15 +4,19 @@ from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageProtocol import HttpImage
 import threading
 
 
+
+
+
+
 class HttpImageSubscriber(ImageSubscriber):
 
     def __init__(self, callback_function, queue=10):
-        ImageSubscriber.__init__(self, HttpImageProtocol, callback_function, queue)
+        ImageSubscriber.__init__(self, HttpImageProtocol(), callback_function, queue)
 
     def subscribe(self):
         self.listen_flag = True
 
-        while self.listen_flag:
-            (text, image) = None, None
-            msg = self.protocol.decodeMessage(text, image)
-            threading.Thread(self.callback_function, args=(msg,)).start()
+    def decodeIncomingRequest(self, image_request):
+        # build a response dict to send back to client
+        msg = self.protocol.decodeMessage(image_request)
+        threading.Thread(target=self.callback_function, args=(msg,)).start()

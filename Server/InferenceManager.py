@@ -12,7 +12,7 @@ class InferenceManager:
 
         self.is_santa_algorithm = IsSantaAlgorithm(Config.MODEL_PATH_IS_SANTA_ALGORITHM)
 
-        self.logger = Logger(self.__class__.__name__)
+        # self.logger = Logger(self.__class__.__name__)
 
     @staticmethod
     def loadAlgorithms():

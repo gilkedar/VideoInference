@@ -16,7 +16,7 @@ class ResponsesManager:
 
     def __init__(self):
 
-        self.logger = Logger(self.__class__.__name__)
+        # self.logger = Logger(self.__class__.__name__)
         self.requests_lock = threading.Lock()
         self.inference_manager = InferenceManager()
         self.response_publisher = MqttDataPublisher(Config.MQTT_SERVER_IP, Config.MQTT_TOPIC_NAME)
@@ -31,14 +31,14 @@ class ResponsesManager:
     def addRequest(self,request_msg):
         with self.requests_lock:
             ResponsesManager.open_requests[request_msg.request_id] = request_msg
-            self.logger.info("Adding request : {}".format(request_msg.request_id))
+            # self.logger.info("Adding request : {}".format(request_msg.request_id))
             self.timer_manager.startMessageTimer(InferenceMessageTimer(request_msg.request_id, request_msg.algorithm))
 
     def removeRequest(self,request_id):
         with self.requests_lock:
             self.timer_manager.stopMessageTimer(request_id)
             del ResponsesManager.open_requests[request_id]
-            self.logger.info("Removing request : {}".format(request_id))
+            # self.logger.info("Removing request : {}".format(request_id))
 
     def publishResponse(self,response):
         self.response_publisher.publish(response)

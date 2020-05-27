@@ -10,7 +10,7 @@ class Logger(logging.Logger):
     date_format = '%Y-%m-%d %H:%M:%S'
     path = "Logs/"
 
-    def __init__(self, name,file_path=None,log_level=logging.DEBUG,log_console=True):
+    def __init__(self, name,file_path=None,log_level=logging.INFO,log_console=True):
         if not file_path:
             file_path = Logger.path
         if not os.path.exists(file_path):

@@ -7,6 +7,7 @@ ENV_VAR_MQTT_TOKEN = "MQTT_TOKEN_IP"
 
 #localHost
 LOCALHOST_IP = "127.0.0.1"
+GLOBAL_IP = "0.0.0.0"
 
 # Image Protocol
 PROTOCOL_HTTP = "http"

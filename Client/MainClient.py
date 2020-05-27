@@ -29,7 +29,7 @@ ap.add_argument("-f", "--videofile", required=False,type=str,
 ap.add_argument("-i", "--ip", required=False, type=str, default=Config.LOCALHOST_IP,
                 help="IP of the desired server")
 
-ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PROTOCOL_ZMQ,
+ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PROTOCOL_HTTP,
                 help="Protocol to send image to server of the desired server")
 
 input_arguments = vars(ap.parse_args())
@@ -137,6 +137,7 @@ class MainClient:
 
             if self.frame_extractor.finished:
                 break
+
             # generate relevant request
             req_msg = self.requests_manager.generateRequestMessage(frame_id,frame)
             # publish request
