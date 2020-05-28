@@ -12,10 +12,12 @@ class MqttDataPublisher(DataPublisher):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.ip))
 
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.topic)
+        self.channel.queue_declare(queue=self.topic,durable=True)
+
 
     def publish(self, message):
         with self.lock:
+
             self.channel.basic_publish(exchange='',
                                   routing_key=self.topic,
                                   body=self.protocol.encodeMessage(message))
