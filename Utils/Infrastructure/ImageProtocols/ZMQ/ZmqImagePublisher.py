@@ -7,7 +7,7 @@ import imagezmq
 
 class ZmqImagePublisher(ImagePublisher):
 
-    def __init__(self, ip=Config.LOCALHOST_IP, port=5555, req_rep=False, tcp_udp="tcp"):
+    def __init__(self, ip=Config.LOCALHOST_IP, port=Config.ZMQ_PORT, req_rep=False, tcp_udp="tcp"):
         ImagePublisher.__init__(self, ZmqImageProtocol())
         self.ip = ip
         self.port = port

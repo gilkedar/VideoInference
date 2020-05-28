@@ -13,13 +13,18 @@ from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageS
 from Utils.Exceptions.InputErrors.Errors import ErrorInvalidProtocolChoice
 from Utils.Exceptions.InputErrors.Errors import ErrorEnvVarNotSet
 
+from flask import Flask, request, Response
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 
-ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PROTOCOL_ZMQ,
+ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PROTOCOL_HTTP,
                 help="Protocol to send image to server of the desired server")
 
 input_arguments = vars(ap.parse_args())
+
+
+app = Flask(__name__)
 
 
 class MainServer:
@@ -64,7 +69,7 @@ class MainServer:
 
     def initImageSubscriber(self):
         if self.image_protocol == Config.PROTOCOL_ZMQ:
-            self.requests_subscriber = ZmqImageSubscriber(Config.LOCALHOST_IP, self.response_manager.handleNewRequest)
+            self.requests_subscriber = ZmqImageSubscriber(Config.GLOBAL_IP, self.response_manager.handleNewRequest)
         elif self.image_protocol == Config.PROTOCOL_HTTP:
             self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleNewRequest)
         else:
@@ -74,13 +79,22 @@ class MainServer:
         self.logger.info("Initializing Resources...")
         self.initResources()
         self.logger.info("Ready for incoming requests...")
-        self.requests_subscriber.subscribe()
+
+
+@app.route("/", methods=['POST'])
+def func():
+    r = request
+    print(r)
+
+    main_server.requests_subscriber.decodeIncomingRequest(r)
+    return Response(response="Image Request Received in HttpServer", status=200, mimetype="text/plain")
 
 
 if __name__ == "__main__":
     main_server = MainServer(input_arguments)
+    main_server.run()
     try:
-        main_server.run()
+        app.run(host=Config.GLOBAL_IP, port=Config.HTTP_PORT)
     except Exception as ex:
         main_server.logger.critical(ex)
     main_server.closeResources()
