@@ -45,7 +45,7 @@ class RequestsManager:
 
     def startListeningToIncomingResponses(self):
         threading.Thread(target=self.response_subscriber.subscribe).start()
-        time.sleep(0.5)  # to stabilize subscriber
+        time.sleep(1)  # to stabilize subscriber
         pass
 
     def getFrame(self,frame_id):
