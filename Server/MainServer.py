@@ -79,5 +79,9 @@ class MainServer:
 
 if __name__ == "__main__":
     main_server = MainServer(input_arguments)
-    main_server.run()
+    try:
+        main_server.run()
+    except Exception as ex:
+        main_server.logger.critical(ex)
+    main_server.closeResources()
 

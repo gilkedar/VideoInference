@@ -14,6 +14,7 @@ class HttpImageSubscriber(ImageSubscriber):
         ImageSubscriber.__init__(self, HttpImageProtocol(), callback_function, queue)
 
     def subscribe(self):
+        # subscribing using Flask in mainServer
         self.listen_flag = True
 
     def decodeIncomingRequest(self, image_request):

@@ -7,7 +7,7 @@ import json
 
 class HttpImagePublisher(ImagePublisher):
 
-    def __init__(self, ip, port=5000, api=""):
+    def __init__(self, ip, port=Config.HTTP_PORT, api=""):
         ImagePublisher.__init__(self,HttpImageProtocol())
         self.ip = ip
         self.port = port

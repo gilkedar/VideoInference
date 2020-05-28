@@ -37,7 +37,7 @@ class MainServer:
         self.response_manager = None
         self.requests_subscriber = None
 
-        # self.logger = Logger(self.__class__.__name__)
+        self.logger = Logger(self.__class__.__name__)
 
     def closeResources(self):
         self.requests_subscriber = None
@@ -76,9 +76,9 @@ class MainServer:
             raise ErrorInvalidProtocolChoice(self.image_protocol)
 
     def run(self):
-        # self.logger.info("Initializing Resources...")
+        self.logger.info("Initializing Resources...")
         self.initResources()
-        # self.logger.info("Ready for incoming requests...")
+        self.logger.info("Ready for incoming requests...")
 
 
 @app.route("/", methods=['POST'])
@@ -93,6 +93,9 @@ def func():
 if __name__ == "__main__":
     main_server = MainServer(input_arguments)
     main_server.run()
-    app.run(host="0.0.0.0", port=5000)
+    try:
+        app.run(host=Config.GLOBAL_IP, port=Config.HTTP_PORT)
+    except Exception as ex:
+        main_server.logger.critical(ex)
     main_server.closeResources()
 

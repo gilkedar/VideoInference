@@ -8,6 +8,8 @@ ENV_VAR_MQTT_TOKEN = "MQTT_TOKEN_IP"
 #localHost
 LOCALHOST_IP = "127.0.0.1"
 GLOBAL_IP = "0.0.0.0"
+HTTP_PORT = 5000
+ZMQ_PORT = 5555
 
 # Image Protocol
 PROTOCOL_HTTP = "http"
@@ -26,8 +28,6 @@ MODEL_PATH_IS_SANTA_ALGORITHM = "/path/to/bucket"
 MQTT_TOPIC_NAME = "InferenceReply"
 MQTT_SERVER_IP = ""  # will be set from env var
 
-# HTTP Parameters
-HTTP_DEFAULT_PORT = "80"
 
 # Input parameters
 INPUT_PARAM_VIDEO_FILE_NAME = "videofile"
