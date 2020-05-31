@@ -28,6 +28,9 @@ class VideoFileFrameExtractor(FrameExtractor):
 
         frame_id = self.current_frame_id
 
+        if frame_id == 11:
+            self.finished = True
+
         return frame_id, frame
 
 

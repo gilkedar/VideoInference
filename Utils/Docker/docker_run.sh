@@ -1,0 +1,1 @@
+docker run --rm -p 5000:5000 593734862029.dkr.ecr.eu-central-1.amazonaws.com/video-inference:latest

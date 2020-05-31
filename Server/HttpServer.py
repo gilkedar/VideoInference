@@ -86,8 +86,11 @@ def func():
     r = request
     print(r)
 
-    main_server.requests_subscriber.decodeIncomingRequest(r)
-    return Response(response="Image Request Received in HttpServer", status=200, mimetype="text/plain")
+    msg = main_server.requests_subscriber.decodeIncomingRequest(r)
+    # threading.Thread(target=main_server.response_manager.handleNewRequest, args=(msg,)).start()
+    # main_server.logger.info("got msg - {}".format(msg.request_id))
+    main_server.response_manager.handleNewRequest(msg)
+    return Response(response="Image Request Received in HttpServer {}".format(msg.request_id), status=200, mimetype="text/plain")
 
 
 if __name__ == "__main__":
