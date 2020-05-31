@@ -51,3 +51,4 @@ class ResponsesManager:
         response_message = algorithm.generateResponseMessage(request_message,ans)
         self.publishResponse(response_message)
         self.removeRequest(response_message.request_id)
+

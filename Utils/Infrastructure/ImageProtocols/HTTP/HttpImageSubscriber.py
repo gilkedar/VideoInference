@@ -20,4 +20,4 @@ class HttpImageSubscriber(ImageSubscriber):
     def decodeIncomingRequest(self, image_request):
         # build a response dict to send back to client
         msg = self.protocol.decodeMessage(image_request)
-        threading.Thread(target=self.callback_function, args=(msg,)).start()
+        return msg

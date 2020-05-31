@@ -5,6 +5,8 @@ import pika
 
 class MqttDataPublisher(DataPublisher):
 
+    PREFETCH_VAL = 100
+
     def __init__(self, ip, topic):
         DataPublisher.__init__(self, MqttDataProtocol())
         self.ip = ip
@@ -13,11 +15,10 @@ class MqttDataPublisher(DataPublisher):
 
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.topic,durable=True)
-
+        self.channel.basic_qos(prefetch_count=self.PREFETCH_VAL)
 
     def publish(self, message):
         with self.lock:
-
             self.channel.basic_publish(exchange='',
                                   routing_key=self.topic,
                                   body=self.protocol.encodeMessage(message))

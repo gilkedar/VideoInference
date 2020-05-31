@@ -25,7 +25,7 @@ ALGORITHM_IS_SANTA = "is_santa"
 MODEL_PATH_IS_SANTA_ALGORITHM = "/path/to/bucket"
 
 # MQTT Parameters
-MQTT_TOPIC_NAME = "InferenceReply"
+MQTT_TOPIC_NAME = "InferenceReplyTest"
 MQTT_SERVER_IP = ""  # will be set from env var
 
 

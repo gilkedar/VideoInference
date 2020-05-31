@@ -141,7 +141,7 @@ class MainClient:
             # generate relevant request
             req_msg = self.requests_manager.generateRequestMessage(frame_id,frame)
             # publish request
-            self.publishRequest(req_msg)
+            threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
 
 
         self.notifyEndOfFrames()
