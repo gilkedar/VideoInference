@@ -161,6 +161,9 @@ class MainClient:
 
                 # generate relevant request
                 req_msg = self.requests_manager.generateRequestMessage(frame_id, preprocessed_frame)
+
+                self.requests_manager.addRequest(frame_id, frame)
+
                 # publish request
                 threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
                 # time.sleep(0.1)
@@ -172,6 +175,7 @@ class MainClient:
         # with self.condition_received_all_requests:
         #     self.condition_received_all_requests.wait()
         self.logger.info("Finished all requests...Shutting down client...")
+        time.sleep(2)
 
 
 if __name__ == "__main__":

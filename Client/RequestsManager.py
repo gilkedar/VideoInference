@@ -10,6 +10,8 @@ from Utils.Helpers.Timers.RequestTimer import RequestMessageTimer
 from Utils.Helpers.Logger import Logger
 from Utils.Settings import Config
 
+from Utils.Algorithms.AlgorithmResponses.IsSantaResponse import IsSantaResponseMessage
+
 
 class RequestsManager:
 
@@ -36,11 +38,13 @@ class RequestsManager:
                                                       self.handleIncomingResponses)
 
     def closeResources(self):
-        self.response_subscriber = None
+        self.response_subscriber.stopListening() # @TODO - clean shutdown
+        self.timer_manager.printTimers()
+        # self.response_subscriber = None
         self.factory = None
         self.video_player = None
         self.frame_editor = None
-        self.timer_manager.printTimers()
+        
         self.timer_manager = None
 
     def startListeningToIncomingResponses(self):
@@ -53,14 +57,13 @@ class RequestsManager:
 
     def generateRequestMessage(self,image_id, image):
         request_msg = self.factory.createImageRequest(image_id, image, self.algorithm)
-        self.addRequest(request_msg)
         return request_msg
 
-    def addRequest(self,request_msg):
+    def addRequest(self,request_id, frame):
         with self.requests_lock:
-            RequestsManager.open_requests[request_msg.request_id] = request_msg
-            self.logger.info("Adding request : {}".format(request_msg.request_id))
-            self.timer_manager.startMessageTimer(RequestMessageTimer(request_msg.request_id))
+            RequestsManager.open_requests[request_id] = frame
+            self.logger.info("Adding request : {}".format(request_id))
+            self.timer_manager.startMessageTimer(RequestMessageTimer(request_id))
 
     def removeRequest(self, request_id):
         with self.requests_lock:
@@ -75,21 +78,29 @@ class RequestsManager:
         with self.condition_all_requests_answered:
             self.condition_all_requests_answered.notify()
 
-    def updateFrameWithResponseData(self, frame_id, response_data):
+    def updateFrameWithResponseData(self, frame_id, response, original_image):
+
         if self.algorithm == Config.ALGORITHM_IS_SANTA:
-            self.frame_editor.addTextToFrame(frame_id, RequestsManager.open_requests[frame_id],)
+            label = IsSantaResponseMessage.getLabel(frame_id, response)
+            return self.frame_editor.addTextToFrame(original_image,label)
 
     def handleIncomingResponses(self, message):
 
         # analyze delivery time
 
         # handle algorithm results - for now just log for testing
-        self.logger.info("Response for request id: {} - {}".format(message.request_id, message.ans))
+        request_id = message.request_id
+        ans = message.ans
+        self.logger.info("Response for request id: {} - {}".format(request_id, ans))
 
-        # close request
-        self.removeRequest(message.request_id)
+        original_image = self.open_requests[request_id]
+        self.removeRequest(request_id)
 
-        pass
+        output_frame = self.updateFrameWithResponseData(request_id, ans, original_image)
+
+        self.video_player.viewFrame(output_frame)
+
+
 
 
 
