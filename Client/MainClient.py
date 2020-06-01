@@ -17,6 +17,10 @@ from Utils.Helpers.Video.DriverFrameExtractor import DriverFrameExtractor
 from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImagePublisher import ZmqImagePublisher
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImagePublisher import HttpImagePublisher
 
+from Client.PreProccessorManager import PreProcessorManager
+
+import time
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 
@@ -31,6 +35,9 @@ ap.add_argument("-i", "--ip", required=False, type=str, default=Config.LOCALHOST
 
 ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PROTOCOL_HTTP,
                 help="Protocol to send image to server of the desired server")
+
+# ap.add_argument("-s", "--skip", required=False, type=str, default=Config.FRAMES_TO_SKIP_DEFAULT,
+#                 help="Protocol to send image to server of the desired server")
 
 input_arguments = vars(ap.parse_args())
 
@@ -50,6 +57,7 @@ class MainClient:
         self.requests_manager = None
         self.frame_extractor = None
         self.requests_publisher = None
+        self.preprocessor_manager = None
 
         self.condition_received_all_requests = threading.Condition()
         self.logger = Logger(self.__class__.__name__)
@@ -63,6 +71,8 @@ class MainClient:
         self.validateEnvVariables()
         self.validateInputParams()
         self.initImagePublisher()
+        self.preprocessor_manager = PreProcessorManager()
+
         # self.readServer-Parameters() @TODO - add routine to read info from DB
 
         self.requests_manager = RequestsManager(self.desired_algorithm,self.condition_received_all_requests)
@@ -78,6 +88,7 @@ class MainClient:
         self.requests_publisher = None
         self.frame_extractor.closeSource()
         self.frame_extractor = None
+        self.preprocessor_manager = None
 
     def validateInputParams(self):
         self.validateAlgorithmInput()
@@ -131,6 +142,9 @@ class MainClient:
         self.requests_manager.startListeningToIncomingResponses()
         self.logger.info("Client starting to publish frames...")
 
+        num_of_frames_to_skip = 10
+        counter = 0
+
         while True:
             # Read frame by frame
             frame_id, frame = self.frame_extractor.getNextFrame()
@@ -138,16 +152,25 @@ class MainClient:
             if self.frame_extractor.finished:
                 break
 
-            # generate relevant request
-            req_msg = self.requests_manager.generateRequestMessage(frame_id,frame)
-            # publish request
-            threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
+            counter += 1
 
+            if counter >= num_of_frames_to_skip:
 
-        self.notifyEndOfFrames()
-        self.logger.info("Waiting for all requests to arrive...")
-        with self.condition_received_all_requests:
-            self.condition_received_all_requests.wait()
+                #pre process the input according to desired algorithm
+                preprocessed_frame = self.preprocessor_manager.PreProcessAlgorithmInput(self.desired_algorithm, frame)
+
+                # generate relevant request
+                req_msg = self.requests_manager.generateRequestMessage(frame_id, preprocessed_frame)
+                # publish request
+                threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
+                # time.sleep(0.1)
+
+                counter = 0
+
+        # self.notifyEndOfFrames()
+        # self.logger.info("Finished sending all requests..")
+        # with self.condition_received_all_requests:
+        #     self.condition_received_all_requests.wait()
         self.logger.info("Finished all requests...Shutting down client...")
 
 

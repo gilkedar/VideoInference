@@ -48,7 +48,7 @@ class ResponsesManager:
         desired_algorithm_name = request_message.algorithm
         algorithm = self.inference_manager.getAlgorithmInstanceFromName(desired_algorithm_name)
         ans = algorithm.run(request_message.data)
-        response_message = algorithm.generateResponseMessage(request_message,ans)
+        response_message = algorithm.generateResponseMessage(request_message, ans)
         self.publishResponse(response_message)
         self.removeRequest(response_message.request_id)
-
+        return ans

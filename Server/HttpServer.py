@@ -14,6 +14,7 @@ from Utils.Exceptions.InputErrors.Errors import ErrorInvalidProtocolChoice
 from Utils.Exceptions.InputErrors.Errors import ErrorEnvVarNotSet
 
 from flask import Flask, request, Response
+import threading
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -84,13 +85,13 @@ class MainServer:
 @app.route("/", methods=['POST'])
 def func():
     r = request
-    print(r)
 
     msg = main_server.requests_subscriber.decodeIncomingRequest(r)
     # threading.Thread(target=main_server.response_manager.handleNewRequest, args=(msg,)).start()
-    # main_server.logger.info("got msg - {}".format(msg.request_id))
-    main_server.response_manager.handleNewRequest(msg)
-    return Response(response="Image Request Received in HttpServer {}".format(msg.request_id), status=200, mimetype="text/plain")
+    ans = main_server.response_manager.handleNewRequest(msg)
+    return Response(response="Image Request ({}) Received in HttpServer {}".format(msg.request_id, ans.serialize()),
+                    status=200,
+                    mimetype="text/plain")
 
 
 if __name__ == "__main__":

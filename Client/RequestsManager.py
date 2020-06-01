@@ -65,8 +65,8 @@ class RequestsManager:
     def removeRequest(self, request_id):
         with self.requests_lock:
             self.timer_manager.stopMessageTimer(request_id)
-            del RequestsManager.open_requests[request_id]
             self.logger.info("Removing request : {}".format(request_id))
+            del RequestsManager.open_requests[request_id]
 
     def setEndOfFrames(self):
         self.end_of_frames = True
@@ -88,9 +88,7 @@ class RequestsManager:
 
         # close request
         self.removeRequest(message.request_id)
-        # check if this was the last request
-        if self.end_of_frames and not RequestsManager.open_requests:
-            self.notifyEndOfRequests()
+
         pass
 
 

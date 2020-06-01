@@ -4,6 +4,7 @@ from Utils.Messages.Requests.ImageRequestMessage import ImageRequestMessage
 import json
 import imutils
 
+
 class HttpImageProtocol(ImageProtocol):
 
     field_request_id = "request_id"
@@ -23,7 +24,8 @@ class HttpImageProtocol(ImageProtocol):
         """
         # img = image_request.data
         # # encode image as jpeg
-        frame = imutils.resize(image_request.data, width=128)
+
+        # frame = imutils.resize(image_request.data, width=128)
         # _, img_encoded = cv2.imencode('.jpg', frame)
         # # send http request with image and receive response.
         #
@@ -33,7 +35,7 @@ class HttpImageProtocol(ImageProtocol):
         ans[self.field_request_id] = image_request.request_id
         ans[self.field_algorithm] = image_request.algorithm
         # ans[self.field_image] = image_request.data.tolist()
-        ans[self.field_image] = frame.tolist()
+        ans[self.field_image] = image_request.data.tolist()
         return json.dumps(ans)
 
     def decodeMessage(self, input_msg):

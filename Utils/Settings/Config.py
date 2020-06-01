@@ -22,10 +22,10 @@ ALGORITHM_DETECT_OBJECTS = "detect_objects"
 ALGORITHM_IS_SANTA = "is_santa"
 
 # Algorithms Models Path
-MODEL_PATH_IS_SANTA_ALGORITHM = "/path/to/bucket"
+MODEL_PATH_IS_SANTA_ALGORITHM = "/Utils/Models/is_santa.model"
 
 # MQTT Parameters
-MQTT_TOPIC_NAME = "InferenceReplyTest"
+MQTT_TOPIC_NAME = "InferenceReplyTest2"
 MQTT_SERVER_IP = ""  # will be set from env var
 
 
@@ -34,3 +34,6 @@ INPUT_PARAM_VIDEO_FILE_NAME = "videofile"
 INPUT_PARAM_ALGORITHM_NAME = "algorithm"
 INPUT_PARAM_IP_ADDRESS_NAME = "ip"
 INPUT_PARAM_PROTOCOL_NAME = "protocol"
+
+# Frames to skip
+FRAMES_TO_SKIP_DEFAULT = 10
