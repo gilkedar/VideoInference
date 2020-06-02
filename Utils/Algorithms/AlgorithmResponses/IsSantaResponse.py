@@ -1,7 +1,7 @@
 
 from Utils.Settings import Config
 
-class IsSantaResponseMessage():
+class IsSantaResponse():
 
     field_santa_prob = "santa_prob"
     field_not_santa_prob = "not_santa_prob"
@@ -20,11 +20,11 @@ class IsSantaResponseMessage():
         return dic
 
     @staticmethod
-    def getLabel( frame_id, response_dic):
-        santa = float(response_dic[IsSantaResponseMessage.field_santa_prob])
-        notSanta = float(response_dic[IsSantaResponseMessage.field_not_santa_prob])
+    def getLabel( response_dic):
+        santa = float(response_dic[IsSantaResponse.field_santa_prob])
+        notSanta = float(response_dic[IsSantaResponse.field_not_santa_prob])
         label = "Santa" if santa > notSanta else "Not Santa"
         proba = santa if santa > notSanta else notSanta
-        label = "Frame {} - {}: {:.5f}%".format(frame_id, label, proba * 100)
+        label = "{}: {:.5f}%".format( label, proba * 100)
         return label
 

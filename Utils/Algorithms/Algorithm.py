@@ -15,7 +15,7 @@ class Algorithm:
     def loadModel(self):
         pass
 
-    def run(self, model_input):
+    def run(self, request_message):
         pass
 
     def generateResponseMessage(self, input_msg, ans):

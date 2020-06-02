@@ -22,7 +22,9 @@ ALGORITHM_DETECT_OBJECTS = "detect_objects"
 ALGORITHM_IS_SANTA = "is_santa"
 
 # Algorithms Models Path
-MODEL_PATH_IS_SANTA_ALGORITHM = "/Utils/Models/is_santa.model"
+MODEL_PATH_IS_SANTA_ALGORITHM = "/Utils/Models/{}/is_santa.model".format(ALGORITHM_IS_SANTA)
+MODEL_PATH_DETECT_FACES_ALGORITHM = "/Utils/Models/{}/detect_faces.caffemodel".format(ALGORITHM_DETECT_FACES)
+MODEL_PATH_DETECT_FACES_PROTOTEXT_ALGORITHM = "/Utils/Models/{}/deploy.prototxt.txt".format(ALGORITHM_DETECT_FACES)
 
 # MQTT Parameters
 MQTT_TOPIC_NAME = "InferenceReplyTest2"

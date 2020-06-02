@@ -3,14 +3,17 @@ import time
 
 from Utils.Messages.RequestsMessageFactory import RequestsMessageFactory
 from Utils.Infrastructure.DataProtocols.MQTT.MqttDataSubscriber import MqttDataSubscriber
+
 from Utils.Helpers.Video.FrameEditor import FrameEditor
 from Utils.Helpers.Video.VideoPlayer import VideoPlayer
+
 from Utils.Helpers.TimerManager import TimerManager
 from Utils.Helpers.Timers.RequestTimer import RequestMessageTimer
 from Utils.Helpers.Logger import Logger
 from Utils.Settings import Config
 
-from Utils.Algorithms.AlgorithmResponses.IsSantaResponse import IsSantaResponseMessage
+from Utils.Algorithms.AlgorithmResponses.IsSantaResponse import IsSantaResponse
+from Utils.Algorithms.AlgorithmResponses.DetectFacesResponse import DetectFacesResponse
 
 
 class RequestsManager:
@@ -52,11 +55,12 @@ class RequestsManager:
         time.sleep(1)  # to stabilize subscriber
         pass
 
-    def getFrame(self,frame_id):
-        return RequestsManager.open_requests[frame_id].data
+    def getOriginalImage(self,request_id):
+        with self.requests_lock:
+            return RequestsManager.open_requests[request_id]
 
-    def generateRequestMessage(self,image_id, image):
-        request_msg = self.factory.createImageRequest(image_id, image, self.algorithm)
+    def generateRequestMessage(self, image_id, image,original_shape):
+        request_msg = self.factory.createImageRequest(image_id, image, self.algorithm, original_shape)
         return request_msg
 
     def addRequest(self,request_id, frame):
@@ -78,11 +82,19 @@ class RequestsManager:
         with self.condition_all_requests_answered:
             self.condition_all_requests_answered.notify()
 
-    def updateFrameWithResponseData(self, frame_id, response, original_image):
+    def getUpdatedFrameWithResponseData(self, request_id, response, original_image):
+
+        image = self.frame_editor.addFrameIdLabel(original_image, request_id)
 
         if self.algorithm == Config.ALGORITHM_IS_SANTA:
-            label = IsSantaResponseMessage.getLabel(frame_id, response)
-            return self.frame_editor.addTextToFrame(original_image,label)
+            label = IsSantaResponse.getLabel(response)
+            return self.frame_editor.addTextToFrame(image, label)
+        elif self.algorithm == Config.ALGORITHM_DETECT_FACES:
+            boxes, labels = DetectFacesResponse.getBoxesAndLabels(response)
+            return self.frame_editor.addBoxesToFrame(image, boxes, labels)
+        else:
+            print("Invalid Algorithm!!!")
+            return None
 
     def handleIncomingResponses(self, message):
 
@@ -93,10 +105,10 @@ class RequestsManager:
         ans = message.ans
         self.logger.info("Response for request id: {} - {}".format(request_id, ans))
 
-        original_image = self.open_requests[request_id]
+        original_image = self.getOriginalImage(request_id)
         self.removeRequest(request_id)
 
-        output_frame = self.updateFrameWithResponseData(request_id, ans, original_image)
+        output_frame = self.getUpdatedFrameWithResponseData(request_id, ans, original_image)
 
         self.video_player.viewFrame(output_frame)
 

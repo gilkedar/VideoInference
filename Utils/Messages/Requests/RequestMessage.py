@@ -9,5 +9,6 @@ class RequestMessage(Message):
         self.algorithm = algorithm
         self.data = data
 
-
+    def getImageData(self):
+        return self.data
 

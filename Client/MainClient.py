@@ -46,6 +46,8 @@ input_arguments = vars(ap.parse_args())
 
 class MainClient:
 
+    supported_algorithms = [Config.ALGORITHM_IS_SANTA, Config.ALGORITHM_DETECT_FACES]
+
     def __init__(self, input_params):
         self.input_params = input_params
 
@@ -98,8 +100,9 @@ class MainClient:
 
     def validateAlgorithmInput(self):
         algorithm_name = self.input_params[Config.INPUT_PARAM_ALGORITHM_NAME]
+
         # validate algorithm name
-        if algorithm_name != Config.ALGORITHM_IS_SANTA:
+        if algorithm_name not in MainClient.supported_algorithms:
             raise ErrorInvalidInputAlgorithmChoice(algorithm_name)
         self.desired_algorithm = algorithm_name
 
@@ -139,7 +142,10 @@ class MainClient:
         self.initResources()
 
         # start listening
+        self.logger.info("Start Listening to incoming responses...")
         self.requests_manager.startListeningToIncomingResponses()
+
+        # start publish frames
         self.logger.info("Client starting to publish frames...")
 
         num_of_frames_to_skip = 10
@@ -148,6 +154,8 @@ class MainClient:
         while True:
             # Read frame by frame
             frame_id, frame = self.frame_extractor.getNextFrame()
+
+            original_shape = [frame.shape[0], frame.shape[1]]
 
             if self.frame_extractor.finished:
                 break
@@ -160,7 +168,7 @@ class MainClient:
                 preprocessed_frame = self.preprocessor_manager.PreProcessAlgorithmInput(self.desired_algorithm, frame)
 
                 # generate relevant request
-                req_msg = self.requests_manager.generateRequestMessage(frame_id, preprocessed_frame)
+                req_msg = self.requests_manager.generateRequestMessage(frame_id, preprocessed_frame, original_shape)
 
                 self.requests_manager.addRequest(frame_id, frame)
 
@@ -174,11 +182,16 @@ class MainClient:
         # self.logger.info("Finished sending all requests..")
         # with self.condition_received_all_requests:
         #     self.condition_received_all_requests.wait()
-        self.logger.info("Finished all requests...Shutting down client...")
+        self.logger.info("Finished sending all requests...Shutting down client...")
+
+        # give time for last messages to arrive before shutdown
         time.sleep(2)
 
 
 if __name__ == "__main__":
     main_client = MainClient(input_arguments)
-    main_client.run()
+    try:
+        main_client.run()
+    except Exception as ex:
+        print(ex)
     main_client.closeResources()

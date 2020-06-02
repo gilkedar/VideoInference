@@ -28,7 +28,7 @@ input_arguments = vars(ap.parse_args())
 app = Flask(__name__)
 
 
-class MainServer:
+class HttpMainServer:
 
     def __init__(self, params):
         self.input_params = params
@@ -86,20 +86,22 @@ class MainServer:
 def func():
     r = request
 
-    msg = main_server.requests_subscriber.decodeIncomingRequest(r)
+    msg = http_main_server.requests_subscriber.decodeIncomingRequest(r)
+    # main_server.logger.info("got msg - {}".format(msg.request_id))
     # threading.Thread(target=main_server.response_manager.handleNewRequest, args=(msg,)).start()
-    ans = main_server.response_manager.handleNewRequest(msg)
+    ans = http_main_server.response_manager.handleNewRequest(msg)
     return Response(response="Image Request ({}) Received in HttpServer {}".format(msg.request_id, ans.serialize()),
                     status=200,
                     mimetype="text/plain")
 
 
 if __name__ == "__main__":
-    main_server = MainServer(input_arguments)
-    main_server.run()
+    http_main_server = HttpMainServer(input_arguments)
+    http_main_server.run()
     try:
         app.run(host=Config.GLOBAL_IP, port=Config.HTTP_PORT)
     except Exception as ex:
-        main_server.logger.critical(ex)
-    main_server.closeResources()
+        http_main_server.logger.critical(ex)
+    finally:
+        http_main_server.closeResources()
 

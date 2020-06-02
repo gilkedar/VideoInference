@@ -1,5 +1,5 @@
 from Utils.Algorithms.Algorithm import Algorithm
-from Utils.Algorithms.AlgorithmResponses.IsSantaResponse import IsSantaResponseMessage
+from Utils.Algorithms.AlgorithmResponses.IsSantaResponse import IsSantaResponse
 
 from Utils.Settings import Config
 
@@ -15,9 +15,9 @@ class IsSantaAlgorithm(Algorithm):
     def loadModel(self):
         self.model = load_model(self.model_path)
 
-    def run(self, input_image):
+    def run(self, request_message):
 
-        image = np.array(input_image)
+        image = np.array(request_message.data)
 
         with self.model_lock:
             # classify the input image
@@ -26,6 +26,6 @@ class IsSantaAlgorithm(Algorithm):
         # build the label
         is_santa_ans = True if santa_prob > not_santa_prob else False
 
-        ans = IsSantaResponseMessage(is_santa_ans, santa_prob, not_santa_prob)
+        ans = IsSantaResponse(is_santa_ans, santa_prob, not_santa_prob)
         return ans
 
