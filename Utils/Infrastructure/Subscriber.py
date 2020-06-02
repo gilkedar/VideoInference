@@ -14,3 +14,7 @@ class Subscriber:
 
     def stopListening(self):
         self.listen_flag = False
+        self.close()
+
+    def close(self):
+        pass

@@ -1,15 +1,18 @@
 from Utils.Infrastructure.ImageProtocols.ImageProtocol import ImageProtocol
 from Utils.Messages.Requests.ImageRequestMessage import ImageRequestMessage
-#import cv2
+from Utils.Algorithms.Algorithm import Algorithm
+
 import json
 import imutils
+
 
 class HttpImageProtocol(ImageProtocol):
 
     field_request_id = "request_id"
     field_algorithm = "algorithm"
     field_image = "image_data"
-
+    field_original_shape = "original_shape"
+    
     def __init__(self):
         ImageProtocol.__init__(self)
         pass
@@ -23,7 +26,8 @@ class HttpImageProtocol(ImageProtocol):
         """
         # img = image_request.data
         # # encode image as jpeg
-        frame = imutils.resize(image_request.data, width=128)
+
+        # frame = imutils.resize(image_request.data, width=128)
         # _, img_encoded = cv2.imencode('.jpg', frame)
         # # send http request with image and receive response.
         #
@@ -33,7 +37,8 @@ class HttpImageProtocol(ImageProtocol):
         ans[self.field_request_id] = image_request.request_id
         ans[self.field_algorithm] = image_request.algorithm
         # ans[self.field_image] = image_request.data.tolist()
-        ans[self.field_image] = frame.tolist()
+        ans[self.field_image] = image_request.data.tolist()
+        ans[self.field_original_shape] = image_request.getOriginalImageShape()
         return json.dumps(ans)
 
     def decodeMessage(self, input_msg):
@@ -47,8 +52,9 @@ class HttpImageProtocol(ImageProtocol):
         request_id = image_request[self.field_request_id]
         algorithm = image_request[self.field_algorithm]
         image = image_request[self.field_image]
+        original_shape = image_request[self.field_original_shape]
         # do some fancy processing here....
-        return ImageRequestMessage(request_id, algorithm, image)
+        return ImageRequestMessage(request_id, algorithm, image, original_shape)
 
     def decodeResponse(self, request):
         return "1-2-3"

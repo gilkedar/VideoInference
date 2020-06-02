@@ -3,12 +3,17 @@ import time
 
 from Utils.Messages.RequestsMessageFactory import RequestsMessageFactory
 from Utils.Infrastructure.DataProtocols.MQTT.MqttDataSubscriber import MqttDataSubscriber
+
 from Utils.Helpers.Video.FrameEditor import FrameEditor
 from Utils.Helpers.Video.VideoPlayer import VideoPlayer
+
 from Utils.Helpers.TimerManager import TimerManager
 from Utils.Helpers.Timers.RequestTimer import RequestMessageTimer
 from Utils.Helpers.Logger import Logger
 from Utils.Settings import Config
+
+from Utils.Algorithms.AlgorithmResponses.IsSantaResponse import IsSantaResponse
+from Utils.Algorithms.AlgorithmResponses.DetectFacesResponse import DetectFacesResponse
 
 
 class RequestsManager:
@@ -36,11 +41,13 @@ class RequestsManager:
                                                       self.handleIncomingResponses)
 
     def closeResources(self):
-        self.response_subscriber = None
+        self.response_subscriber.stopListening() # @TODO - clean shutdown
+        self.timer_manager.printTimers()
+        # self.response_subscriber = None
         self.factory = None
         self.video_player = None
         self.frame_editor = None
-        self.timer_manager.printTimers()
+        
         self.timer_manager = None
 
     def startListeningToIncomingResponses(self):
@@ -48,25 +55,25 @@ class RequestsManager:
         time.sleep(1)  # to stabilize subscriber
         pass
 
-    def getFrame(self,frame_id):
-        return RequestsManager.open_requests[frame_id].data
+    def getOriginalImage(self,request_id):
+        with self.requests_lock:
+            return RequestsManager.open_requests[request_id]
 
-    def generateRequestMessage(self,image_id, image):
-        request_msg = self.factory.createImageRequest(image_id, image, self.algorithm)
-        self.addRequest(request_msg)
+    def generateRequestMessage(self, image_id, image,original_shape):
+        request_msg = self.factory.createImageRequest(image_id, image, self.algorithm, original_shape)
         return request_msg
 
-    def addRequest(self,request_msg):
+    def addRequest(self,request_id, frame):
         with self.requests_lock:
-            RequestsManager.open_requests[request_msg.request_id] = request_msg
-            self.logger.info("Adding request : {}".format(request_msg.request_id))
-            self.timer_manager.startMessageTimer(RequestMessageTimer(request_msg.request_id))
+            RequestsManager.open_requests[request_id] = frame
+            self.logger.info("Adding request : {}".format(request_id))
+            self.timer_manager.startMessageTimer(RequestMessageTimer(request_id))
 
     def removeRequest(self, request_id):
         with self.requests_lock:
             self.timer_manager.stopMessageTimer(request_id)
-            del RequestsManager.open_requests[request_id]
             self.logger.info("Removing request : {}".format(request_id))
+            del RequestsManager.open_requests[request_id]
 
     def setEndOfFrames(self):
         self.end_of_frames = True
@@ -75,23 +82,37 @@ class RequestsManager:
         with self.condition_all_requests_answered:
             self.condition_all_requests_answered.notify()
 
-    def updateFrameWithResponseData(self, frame_id, response_data):
+    def getUpdatedFrameWithResponseData(self, request_id, response, original_image):
+
+        image = self.frame_editor.addFrameIdLabel(original_image, request_id)
+
         if self.algorithm == Config.ALGORITHM_IS_SANTA:
-            self.frame_editor.addTextToFrame(frame_id, RequestsManager.open_requests[frame_id],)
+            label = IsSantaResponse.getLabel(response)
+            return self.frame_editor.addTextToFrame(image, label)
+        elif self.algorithm == Config.ALGORITHM_DETECT_FACES:
+            boxes, labels = DetectFacesResponse.getBoxesAndLabels(response)
+            return self.frame_editor.addBoxesToFrame(image, boxes, labels)
+        else:
+            print("Invalid Algorithm!!!")
+            return None
 
     def handleIncomingResponses(self, message):
 
         # analyze delivery time
 
         # handle algorithm results - for now just log for testing
-        self.logger.info("Response for request id: {} - {}".format(message.request_id, message.ans))
+        request_id = message.request_id
+        ans = message.ans
+        self.logger.info("Response for request id: {} - {}".format(request_id, ans))
 
-        # close request
-        self.removeRequest(message.request_id)
-        # check if this was the last request
-        if self.end_of_frames and not RequestsManager.open_requests:
-            self.notifyEndOfRequests()
-        pass
+        original_image = self.getOriginalImage(request_id)
+        self.removeRequest(request_id)
+
+        output_frame = self.getUpdatedFrameWithResponseData(request_id, ans, original_image)
+
+        self.video_player.viewFrame(output_frame)
+
+
 
 
 

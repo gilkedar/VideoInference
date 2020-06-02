@@ -2,6 +2,7 @@ from Utils.Infrastructure.ImageProtocols.ImageProtocol import ImageProtocol
 from Utils.Messages.Requests.ImageRequestMessage import ImageRequestMessage
 from Utils.Settings import Config
 
+
 class ZmqImageProtocol(ImageProtocol):
 
     TEXT_SEPARATOR = "-"
@@ -29,4 +30,5 @@ class ZmqImageProtocol(ImageProtocol):
         :return: ImageRequestMessage
         """
         request_id, algorithm = text.split(ZmqImageProtocol.TEXT_SEPARATOR)
-        return ImageRequestMessage(int(request_id), algorithm, image)
+        return ImageRequestMessage(int(request_id), algorithm, image, (0,0))
+

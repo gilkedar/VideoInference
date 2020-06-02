@@ -1,12 +1,6 @@
 from Utils.Infrastructure.ImageProtocols.ImageSubscriber import ImageSubscriber
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageProtocol import HttpImageProtocol
 
-import threading
-
-
-
-
-
 
 class HttpImageSubscriber(ImageSubscriber):
 

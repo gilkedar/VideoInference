@@ -20,11 +20,20 @@ class MqttDataSubscriber(DataSubscriber):
         # self.lock = threading.Lock()
 
     def subscribe(self):
+        self.listen_flag = True
+
         self.channel.basic_qos(prefetch_count=self.PREFETCH_VAL)
         self.channel.basic_consume(queue=self.topic,  on_message_callback=self.mqtt_callback,auto_ack=True)
-        self.channel.start_consuming()
+        try:
+            self.channel.start_consuming()
+        except Exception as ex:
+            print(ex)
 
     def mqtt_callback(self,ch,method,properties,body):
+
+        if not self.listen_flag:
+            return
+
         msg = self.protocol.decodeMessage(body)
         # self.send_ack_for_ducument(ch,method)
         threading.Thread(target=self.callback_function, args=(msg,)).start()
@@ -33,3 +42,10 @@ class MqttDataSubscriber(DataSubscriber):
 
         print("Delivery Tag: ({}) ".format(method.delivery_tag))
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def close(self):
+        try:
+            self.channel.stop_consuming()
+        except Exception as ex:
+            print(ex)
+
