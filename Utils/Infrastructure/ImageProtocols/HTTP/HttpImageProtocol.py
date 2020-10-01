@@ -5,16 +5,14 @@ from Utils.Algorithms.Algorithm import Algorithm
 
 import json
 import imutils
-
+import cv2
+import numpy as np
 
 class HttpImageProtocol(ImageProtocol):
 
-    field_request_id = "request_id"
-    field_algorithm = "algorithm"
-    field_image = "image_data"
-    field_original_shape = "original_shape"
-    field_ans = "ans"
-    
+    field_request_id = "HTTP_REQUEST_ID"
+    field_algorithm = "HTTP_ALGORITHM"
+
     def __init__(self):
         ImageProtocol.__init__(self)
         pass
@@ -50,13 +48,13 @@ class HttpImageProtocol(ImageProtocol):
         :param image: open CV instance of an image
         :return: ImageRequestMessage
         """
-        image_request = json.loads(input_msg.data)
-        request_id = image_request[self.field_request_id]
-        algorithm = image_request[self.field_algorithm]
-        image = image_request[self.field_image]
-        original_shape = image_request[self.field_original_shape]
+        request_id = input_msg.headers.environ[self.field_request_id]
+        algorithm = input_msg.headers.environ[self.field_algorithm]
+        img_str = input_msg.data
+        tmp_img = np.frombuffer(img_str, np.uint8)
+        image = cv2.imdecode(tmp_img, flags=1)
         # do some fancy processing here....
-        return ImageRequestMessage(request_id, algorithm, image, original_shape)
+        return ImageRequestMessage(request_id, algorithm, image)
 
     def decodeResponse(self, response):
         ans = response.json()

@@ -17,13 +17,18 @@ class DetectFacesAlgorithm(Algorithm):
     def loadModel(self):
         self.model = cv2.dnn.readNetFromCaffe(self.prototxt_path, self.model_path)
 
+    def preProcessData(self, original_frame):
+        resized = cv2.resize(original_frame, (300, 300))
+        return np.array(resized, dtype=np.uint8)
+
     def run(self, request_message):
 
         # image = cv2.imread("/home/gilkedar/workspace/VideoInference/Tests/ImageTestFile/person.jpeg")
         # resized_image = cv2.resize(image, (300,300))
         # blob = cv2.dnn.blobFromImage(resized_image, 1.0, (300, 300), (104.0, 177.0, 123.0))
 
-        image = np.array(request_message.data, dtype=np.uint8)
+        request_id = request_message.request_id
+        image = self.preProcessData(request_message.data)
         blob = cv2.dnn.blobFromImage(image, 1.0, (300, 300), (104.0, 177.0, 123.0))
         h, w = request_message.getOriginalImageShape()
 
@@ -49,6 +54,12 @@ class DetectFacesAlgorithm(Algorithm):
                     boxes.append((startX, startY, endX, endY))
                     probabilities.append(confidence)
 
-            ans = DetectFacesResponse(boxes, probabilities)
+            ans = DetectFacesResponse(request_id, boxes, probabilities)
 
             return ans
+
+    def updateFrame(self, original_frame, response):
+        request_id = response.request_id
+        image = self.frame_editor.addFrameIdLabel(original_frame, request_id)
+        boxes, labels = DetectFacesResponse.getBoxesAndLabels(response.serialize())
+        return self.frame_editor.addBoxesToFrame(image, boxes, labels)

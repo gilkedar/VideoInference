@@ -1,16 +1,14 @@
 import argparse
 import atexit
-import cv2
 import threading
-import json
-import imutils
-import numpy
 
 from Utils.Settings import Config
 from Utils.Helpers.Logger import Logger
 
-from Server.ResponsesManager import ResponsesManager
+from Server.RequestsManager import RequestsManager
+
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
+from Utils.Helpers.Video.FrameEditor import FrameEditor
 
 from flask import Flask, request, Response, render_template
 
@@ -23,103 +21,92 @@ ap.add_argument("-a", "--algorithm", required=True, type=str,
 input_arguments = vars(ap.parse_args())
 
 app = Flask(__name__)
-
 outputFrame = None
 lock = threading.Lock()
+
 
 class HttpMainServer:
 
     def __init__(self, algorithm_name):
         self.algorithm_name = algorithm_name
-        self.response_manager = None
+        self.requests_manager = None
         self.requests_subscriber = None
         self.logger = Logger(self.__class__.__name__)
+        self.output_lock = threading.Lock()
+        self.output_image = None
+        self.frame_editor = FrameEditor()
 
     def closeResources(self):
         self.requests_subscriber = None
-        self.response_manager.closeResources()
-        self.response_manager = None
+        self.requests_manager.closeResources()
+        self.requests_manager = None
 
     def initResources(self):
         # initialize response manager
-        self.response_manager = ResponsesManager(self.algorithm_name)
+        self.requests_manager = RequestsManager(self.algorithm_name)
         # connect to request subscriber
-        self.initImageSubscriber()
+        self.requests_subscriber = HttpImageSubscriber(self.requests_manager.handleNewRequest)
 
         atexit.register(self.closeResources)
 
-    def initImageSubscriber(self):
-        self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleNewRequest)
+    def getOutputImage(self):
+        with self.output_lock:
+            return self.output_image
+
+    def updateOutputImage(self, updated_image):
+        with self.output_lock:
+            self.output_image = updated_image
+
+    def genearteOutputImage(self):
+        while True:
+            output_frame = self.getOutputImage()
+            if outputFrame is None:
+                continue
+            encoded_image= self.frame_editor.encode_to_jpg(output_frame)
+            if not encoded_image:
+                continue
+            yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                   bytearray(encoded_image) + b'\r\n')
 
     def run(self):
         self.logger.info("Initializing Resources...")
         self.initResources()
         self.logger.info("Ready for incoming requests...")
 
-#
-def generate():
-    global outputFrame, lock
-
-    while True:
-        # wait until the lock is acquired
-        with lock:
-            if outputFrame is None:
-                continue
-            (flag, encodedImage) = cv2.imencode(".jpg", outputFrame)
-            if not flag:
-                continue
-        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
-               bytearray(encodedImage) + b'\r\n')
-
 
 @app.route("/video_feed")
 def video_feed():
     # return the response generated along with the specific media
     # type (mime type)
-    return Response(generate(),
+    return Response(http_main_server.genearteOutputImage(),
                     mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.route("/user", methods=['POST'])
 def video_func():
-    global outputFrame
 
-    r = request
-    # frame = numpy.array(json.loads(r.data)["image_data"])
+    try:
+        r = request
 
-    img_str = r.data
-    img = numpy.frombuffer(img_str, numpy.uint8)
-    frame = cv2.imdecode(img, flags=1)
-    algorithm = r.headers.environ['HTTP_ALGORITHM']
-    with lock:
-        outputFrame = frame
-    return Response()
+        request_msg = http_main_server.requests_subscriber.decodeIncomingRequest(r)
+        # threading.Thread(target=http_main_server.response_manager.handleNewRequest, args=(msg,)).start()
+        response = http_main_server.requests_manager.handleNewRequest(request_msg)
+        http_main_server.updateOutputImage(response.updated_frame)
+        return Response(response=f"Success - Request {response.request_id} ",
+                        status=200,
+                        mimetype="application/json")
+    except Exception as ex:
+        http_main_server.logger.error(f"SERVER ERROR : {ex} ")
+        return Response(response=f"Failed - Request {response.request_id} - {ex}",
+                        status=444,
+                        mimetype="text/plain")
+
 
 @app.route("/")
 def func():
 
     return render_template("index.html")
 
-#
-#
-# @app.route("/", methods=['POST'])
-# def func():
-#     try:
-#         r = request
-#
-#         msg = http_main_server.requests_subscriber.decodeIncomingRequest(r)
-#         # main_server.logger.info("got msg - {}".format(msg.request_id))
-#         # threading.Thread(target=main_server.response_manager.handleNewRequest, args=(msg,)).start()
-#         response = http_main_server.response_manager.handleNewRequest(msg)
-#         return Response(response=response.toJSON(),
-#                         status=200,
-#                         mimetype="application/json")
-#     except Exception as ex:
-#         http_main_server.logger.error(f"SERVER ERROR : {ex} ")
-#         return Response(response="{}".format(ex),
-#                         status=444,
-#                         mimetype="text/plain")
-#
 
 if __name__ == "__main__":
 

@@ -11,7 +11,7 @@ class HttpImageSubscriber(ImageSubscriber):
         # subscribing using Flask in mainServer
         self.listen_flag = True
 
-    def decodeIncomingRequest(self, image_request):
+    def decodeIncomingRequest(self, request):
         # build a response dict to send back to client
-        msg = self.protocol.decodeMessage(image_request)
-        return msg
+        request_message = self.protocol.decodeMessage(request)
+        return request_message

@@ -5,7 +5,7 @@ import atexit
 from Utils.Settings import Config
 from Utils.Helpers.Logger import Logger
 
-from Server.ResponsesManager import ResponsesManager
+from Server.RequestsManager import RequestsManager
 
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
 from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageSubscriber
@@ -48,7 +48,7 @@ class MainServer:
         # validate input parameters
         self.validateInputParams()
         # initialize response manager
-        self.response_manager = ResponsesManager()
+        self.response_manager = RequestsManager()
         # connect to request subscriber
         self.initImageSubscriber()
 

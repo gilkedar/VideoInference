@@ -34,3 +34,9 @@ class FrameEditor:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
         return frame
+
+    def encode_to_jpg(self, image):
+        (flag, encodedImage) = cv2.imencode(".jpg", image)
+        if not flag:
+            return None
+        return encodedImage

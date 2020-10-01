@@ -172,11 +172,11 @@ class MainClient:
                     # generate relevant request
                     req_msg = self.requests_manager.generateRequestMessage(frame_id, preprocessed_frame, original_shape)
 
-                    # self.requests_manager.addRequest(frame_id, frame)
+                    # self.requests_manager.addRequest(request_id, frame)
 
                     threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
                     # ans = self.publishRequest(req_msg)
-                    print(frame_id)
+                    print(req_msg.request_id)
                     # self.requests_manager.handleIncomingResponses(ans)
                     # publish request
                     # threading.Thread(target=self.publishRequest,args=(req_msg,)).start()

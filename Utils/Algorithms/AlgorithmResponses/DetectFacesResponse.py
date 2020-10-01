@@ -7,7 +7,8 @@ class DetectFacesResponse:
     field_boxes = "face_boxes"
     field_probabilities = "probabilities"
 
-    def __init__(self, boxes, probabilities):
+    def __init__(self, request_id, boxes, probabilities):
+        self.request_id = request_id
         self.boxes = boxes
         self.probabilities = probabilities
 
@@ -19,7 +20,6 @@ class DetectFacesResponse:
 
     @staticmethod
     def getBoxesAndLabels(response_dic):
-
         probabilities = response_dic[DetectFacesResponse.field_probabilities]
         boxes = response_dic[DetectFacesResponse.field_boxes]
         labels = []
