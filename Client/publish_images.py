@@ -26,8 +26,9 @@ def publish_image(frame, address):
                'request_id': str(request_id)}
     # resized_frame = imutils.resize(frame, width=400)
     (flag, encodedImage) = cv2.imencode(".jpg", frame)
+    bytes_str = encodedImage.tostring()
+    requests.post(address, data=bytes_str, headers=headers)
 
-    requests.post(address, data=encodedImage.tostring(), headers=headers)
     print(request_id)
 
 def gen():

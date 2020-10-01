@@ -14,15 +14,12 @@ from flask import Flask, request, Response, render_template
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
-
 ap.add_argument("-a", "--algorithm", required=True, type=str,
                 help="Algorithm to run on http server")
-
 input_arguments = vars(ap.parse_args())
 
+
 app = Flask(__name__)
-outputFrame = None
-lock = threading.Lock()
 
 
 class HttpMainServer:
@@ -60,7 +57,7 @@ class HttpMainServer:
     def genearteOutputImage(self):
         while True:
             output_frame = self.getOutputImage()
-            if outputFrame is None:
+            if output_frame is None:
                 continue
             encoded_image= self.frame_editor.encode_to_jpg(output_frame)
             if not encoded_image:
@@ -89,7 +86,7 @@ def video_func():
         r = request
 
         request_msg = http_main_server.requests_subscriber.decodeIncomingRequest(r)
-        # threading.Thread(target=http_main_server.response_manager.handleNewRequest, args=(msg,)).start()
+        # threading.Thread(target=http_main_server.response_manager.handleNewRequest, args=(request_msg,)).start()
         response = http_main_server.requests_manager.handleNewRequest(request_msg)
         http_main_server.updateOutputImage(response.updated_frame)
         return Response(response=f"Success - Request {response.request_id} ",

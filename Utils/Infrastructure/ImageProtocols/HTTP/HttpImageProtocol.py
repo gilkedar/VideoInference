@@ -1,12 +1,11 @@
 from Utils.Infrastructure.ImageProtocols.ImageProtocol import ImageProtocol
 from Utils.Messages.Requests.ImageRequestMessage import ImageRequestMessage
 from Utils.Messages.Responses.ImageResponseMessage import ImageResponseMessage
-from Utils.Algorithms.Algorithm import Algorithm
 
 import json
-import imutils
 import cv2
 import numpy as np
+
 
 class HttpImageProtocol(ImageProtocol):
 
@@ -37,8 +36,6 @@ class HttpImageProtocol(ImageProtocol):
         ans[self.field_request_id] = image_request.request_id
         ans[self.field_algorithm] = image_request.algorithm
         # ans[self.field_image] = image_request.data.tolist()
-        ans[self.field_image] = image_request.data.tolist()
-        ans[self.field_original_shape] = image_request.getOriginalImageShape()
         return json.dumps(ans)
 
     def decodeMessage(self, input_msg):
@@ -56,9 +53,4 @@ class HttpImageProtocol(ImageProtocol):
         # do some fancy processing here....
         return ImageRequestMessage(request_id, algorithm, image)
 
-    def decodeResponse(self, response):
-        ans = response.json()
-        return ImageResponseMessage(ans[self.field_request_id],
-                                    ans[self.field_algorithm],
-                                    ans[self.field_ans])
 

@@ -24,4 +24,4 @@ ENTRYPOINT [ "python3" ]
 
 EXPOSE 5000
 
-CMD [ "Server/HttpServer.py" ]
+CMD [ "Server/AlgorithmHttpServer.py" ]
