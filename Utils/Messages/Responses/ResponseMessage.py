@@ -1,4 +1,5 @@
 from Utils.Messages.Message import Message
+import json
 
 
 class ResponseMessage(Message):
@@ -8,5 +9,4 @@ class ResponseMessage(Message):
         self.request_id = request_id
         self.algorithm = algorithm
         self.ans = ans
-
 

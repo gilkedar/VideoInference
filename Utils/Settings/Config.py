@@ -1,3 +1,4 @@
+import os
 
 # Project
 PROJECT_NAME = "VideoInference"
@@ -22,9 +23,11 @@ ALGORITHM_DETECT_OBJECTS = "detect_objects"
 ALGORITHM_IS_SANTA = "is_santa"
 
 # Algorithms Models Path
-MODEL_PATH_IS_SANTA_ALGORITHM = "/Utils/Models/{}/is_santa.model".format(ALGORITHM_IS_SANTA)
-MODEL_PATH_DETECT_FACES_ALGORITHM = "/Utils/Models/{}/detect_faces.caffemodel".format(ALGORITHM_DETECT_FACES)
-MODEL_PATH_DETECT_FACES_PROTOTEXT_ALGORITHM = "/Utils/Models/{}/deploy.prototxt.txt".format(ALGORITHM_DETECT_FACES)
+PROJECT_PATH = os.path.dirname(os.path.abspath(os.curdir))
+MODELS_PATH = os.path.join(PROJECT_PATH, "Utils", "Models")
+MODEL_PATH_IS_SANTA_ALGORITHM = os.path.join(MODELS_PATH, ALGORITHM_IS_SANTA, "is_santa.model")
+MODEL_PATH_DETECT_FACES_ALGORITHM = os.path.join(MODELS_PATH, ALGORITHM_DETECT_FACES, "detect_faces.caffemodel")
+MODEL_PATH_DETECT_FACES_PROTOTEXT_ALGORITHM = os.path.join(MODELS_PATH,ALGORITHM_DETECT_FACES, "deploy.prototxt.txt")
 
 # MQTT Parameters
 MQTT_TOPIC_NAME = "InferenceReplyTest2"

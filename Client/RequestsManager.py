@@ -36,12 +36,12 @@ class RequestsManager:
         self.frame_editor = FrameEditor()
         self.video_player = VideoPlayer()
 
-        self.response_subscriber = MqttDataSubscriber(Config.MQTT_SERVER_IP,
-                                                      Config.MQTT_TOPIC_NAME,
-                                                      self.handleIncomingResponses)
+        # self.response_subscriber = MqttDataSubscriber(Config.MQTT_SERVER_IP,
+        #                                               Config.MQTT_TOPIC_NAME,
+        #                                               self.handleIncomingResponses)
 
     def closeResources(self):
-        self.response_subscriber.stopListening() # @TODO - clean shutdown
+        # self.response_subscriber.stopListening() # @TODO - clean shutdown
         self.timer_manager.printTimers()
         # self.response_subscriber = None
         self.factory = None
@@ -96,13 +96,13 @@ class RequestsManager:
             print("Invalid Algorithm!!!")
             return None
 
-    def handleIncomingResponses(self, message):
+    def handleIncomingResponses(self, response_message):
 
         # analyze delivery time
 
         # handle algorithm results - for now just log for testing
-        request_id = message.request_id
-        ans = message.ans
+        request_id = response_message.request_id
+        ans = response_message.ans
         self.logger.info("Response for request id: {} - {}".format(request_id, ans))
 
         original_image = self.getOriginalImage(request_id)
@@ -110,7 +110,7 @@ class RequestsManager:
 
         output_frame = self.getUpdatedFrameWithResponseData(request_id, ans, original_image)
 
-        self.video_player.viewFrame(output_frame)
+        # self.video_player.viewFrame(output_frame)
 
 
 

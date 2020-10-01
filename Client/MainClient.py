@@ -70,7 +70,7 @@ class MainClient:
         Config.MQTT_SERVER_IP = os.environ[Config.ENV_VAR_MQTT_TOKEN]
 
     def initResources(self):
-        self.validateEnvVariables()
+        # self.validateEnvVariables()
         self.validateInputParams()
         self.initImagePublisher()
         self.preprocessor_manager = PreProcessorManager()
@@ -124,12 +124,13 @@ class MainClient:
         if self.image_protocol == Config.PROTOCOL_ZMQ:
             self.requests_publisher = ZmqImagePublisher(self.server_ip)
         elif self.image_protocol == Config.PROTOCOL_HTTP:
-            self.requests_publisher = HttpImagePublisher(self.server_ip)
+            self.requests_publisher = HttpImagePublisher(self.server_ip, api="/user")
         else:
             raise ErrorInvalidProtocolChoice(self.image_protocol)
 
-    def publishRequest(self,req_msg):
+    def publishRequest(self, req_msg):
         # self.logger.info("Publishing request : {}".format(req_msg.request_id))
+        # return self.requests_publisher.publish(req_msg)
         self.requests_publisher.publish(req_msg)
 
     def notifyEndOfFrames(self):
@@ -143,42 +144,50 @@ class MainClient:
 
         # start listening
         self.logger.info("Start Listening to incoming responses...")
-        self.requests_manager.startListeningToIncomingResponses()
+        # self.requests_manager.startListeningToIncomingResponses()
 
         # start publish frames
         self.logger.info("Client starting to publish frames...")
 
-        num_of_frames_to_skip = 10
+        num_of_frames_to_skip = 0
         counter = 0
 
         while True:
-            # Read frame by frame
-            frame_id, frame = self.frame_extractor.getNextFrame()
+            try:
+                # Read frame by frame
+                frame_id, frame = self.frame_extractor.getNextFrame()
 
-            original_shape = [frame.shape[0], frame.shape[1]]
+                original_shape = [frame.shape[0], frame.shape[1]]
 
-            if self.frame_extractor.finished:
-                break
+                if self.frame_extractor.finished:
+                    break
 
-            counter += 1
+                counter += 1
 
-            if counter >= num_of_frames_to_skip:
+                if counter >= num_of_frames_to_skip:
 
-                #pre process the input according to desired algorithm
-                preprocessed_frame = self.preprocessor_manager.PreProcessAlgorithmInput(self.desired_algorithm, frame)
+                    #pre process the input according to desired algorithm
+                    preprocessed_frame = self.preprocessor_manager.PreProcessAlgorithmInput(self.desired_algorithm, frame)
 
-                # generate relevant request
-                req_msg = self.requests_manager.generateRequestMessage(frame_id, preprocessed_frame, original_shape)
+                    # generate relevant request
+                    req_msg = self.requests_manager.generateRequestMessage(frame_id, preprocessed_frame, original_shape)
 
-                self.requests_manager.addRequest(frame_id, frame)
+                    # self.requests_manager.addRequest(frame_id, frame)
 
-                # publish request
-                threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
-                # time.sleep(0.1)
+                    threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
+                    # ans = self.publishRequest(req_msg)
+                    print(frame_id)
+                    # self.requests_manager.handleIncomingResponses(ans)
+                    # publish request
+                    # threading.Thread(target=self.publishRequest,args=(req_msg,)).start()
+                    # time.sleep(0.1)
 
-                counter = 0
+                    counter = 0
 
-        # self.notifyEndOfFrames()
+            except Exception as ex:
+                print(ex)
+
+            # self.notifyEndOfFrames()
         # self.logger.info("Finished sending all requests..")
         # with self.condition_received_all_requests:
         #     self.condition_received_all_requests.wait()

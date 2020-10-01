@@ -6,23 +6,9 @@ from Utils.Settings import Config
 from Utils.Helpers.Logger import Logger
 
 from Server.ResponsesManager import ResponsesManager
-
 from Utils.Infrastructure.ImageProtocols.HTTP.HttpImageSubscriber import HttpImageSubscriber
-from Utils.Infrastructure.ImageProtocols.ZMQ.ZmqImageSubscriber import ZmqImageSubscriber
-
-from Utils.Exceptions.InputErrors.Errors import ErrorInvalidProtocolChoice
-from Utils.Exceptions.InputErrors.Errors import ErrorEnvVarNotSet
 
 from flask import Flask, request, Response
-import threading
-
-# construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
-
-ap.add_argument("-p", "--protocol", required=False, type=str, default=Config.PROTOCOL_HTTP,
-                help="Protocol to send image to server of the desired server")
-
-input_arguments = vars(ap.parse_args())
 
 
 app = Flask(__name__)
@@ -30,14 +16,9 @@ app = Flask(__name__)
 
 class HttpMainServer:
 
-    def __init__(self, params):
-        self.input_params = params
-
-        self.image_protocol = None
-
+    def __init__(self):
         self.response_manager = None
         self.requests_subscriber = None
-
         self.logger = Logger(self.__class__.__name__)
 
     def closeResources(self):
@@ -45,14 +26,7 @@ class HttpMainServer:
         self.response_manager.closeResources()
         self.response_manager = None
 
-    def validateEnvVariables(self):
-        if Config.ENV_VAR_MQTT_TOKEN not in os.environ:
-            raise ErrorEnvVarNotSet(Config.ENV_VAR_MQTT_TOKEN)
-        Config.MQTT_SERVER_IP = os.environ[Config.ENV_VAR_MQTT_TOKEN]
-
     def initResources(self):
-        # validate input parameters
-        self.validateInputParams()
         # initialize response manager
         self.response_manager = ResponsesManager()
         # connect to request subscriber
@@ -60,21 +34,8 @@ class HttpMainServer:
 
         atexit.register(self.closeResources)
 
-    def validateInputParams(self):
-        # validate environmental Variables are set
-        self.validateEnvVariables()
-
-        # validate image protocol
-        if Config.INPUT_PARAM_PROTOCOL_NAME in self.input_params:
-            self.image_protocol = self.input_params[Config.INPUT_PARAM_PROTOCOL_NAME]
-
     def initImageSubscriber(self):
-        if self.image_protocol == Config.PROTOCOL_ZMQ:
-            self.requests_subscriber = ZmqImageSubscriber(Config.GLOBAL_IP, self.response_manager.handleNewRequest)
-        elif self.image_protocol == Config.PROTOCOL_HTTP:
-            self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleNewRequest)
-        else:
-            raise ErrorInvalidProtocolChoice(self.image_protocol)
+        self.requests_subscriber = HttpImageSubscriber(self.response_manager.handleNewRequest)
 
     def run(self):
         self.logger.info("Initializing Resources...")
@@ -84,19 +45,26 @@ class HttpMainServer:
 
 @app.route("/", methods=['POST'])
 def func():
-    r = request
+    try:
+        r = request
 
-    msg = http_main_server.requests_subscriber.decodeIncomingRequest(r)
-    # main_server.logger.info("got msg - {}".format(msg.request_id))
-    # threading.Thread(target=main_server.response_manager.handleNewRequest, args=(msg,)).start()
-    ans = http_main_server.response_manager.handleNewRequest(msg)
-    return Response(response="Image Request ({}) Received in HttpServer {}".format(msg.request_id, ans.serialize()),
-                    status=200,
-                    mimetype="text/plain")
+        msg = http_main_server.requests_subscriber.decodeIncomingRequest(r)
+        # main_server.logger.info("got msg - {}".format(msg.request_id))
+        # threading.Thread(target=main_server.response_manager.handleNewRequest, args=(msg,)).start()
+        ans = http_main_server.response_manager.handleNewRequest(msg)
+        return Response(response="Image Request ({}) Received in HttpServer {}".format(msg.request_id, ans.serialize()),
+                        status=200,
+                        mimetype="text/plain")
+    except Exception as ex:
+        http_main_server.logger.error("*** SERVER ERROR *** ")
+        return Response(response="{}".format(ex),
+                        status=444,
+                        mimetype="text/plain")
 
 
 if __name__ == "__main__":
-    http_main_server = HttpMainServer(input_arguments)
+
+    http_main_server = HttpMainServer()
     http_main_server.run()
     try:
         app.run(host=Config.GLOBAL_IP, port=Config.HTTP_PORT)

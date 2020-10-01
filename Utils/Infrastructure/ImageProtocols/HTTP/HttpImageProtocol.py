@@ -1,5 +1,6 @@
 from Utils.Infrastructure.ImageProtocols.ImageProtocol import ImageProtocol
 from Utils.Messages.Requests.ImageRequestMessage import ImageRequestMessage
+from Utils.Messages.Responses.ImageResponseMessage import ImageResponseMessage
 from Utils.Algorithms.Algorithm import Algorithm
 
 import json
@@ -12,6 +13,7 @@ class HttpImageProtocol(ImageProtocol):
     field_algorithm = "algorithm"
     field_image = "image_data"
     field_original_shape = "original_shape"
+    field_ans = "ans"
     
     def __init__(self):
         ImageProtocol.__init__(self)
@@ -56,5 +58,9 @@ class HttpImageProtocol(ImageProtocol):
         # do some fancy processing here....
         return ImageRequestMessage(request_id, algorithm, image, original_shape)
 
-    def decodeResponse(self, request):
-        return "1-2-3"
+    def decodeResponse(self, response):
+        ans = response.json()
+        return ImageResponseMessage(ans[self.field_request_id],
+                                    ans[self.field_algorithm],
+                                    ans[self.field_ans])
+

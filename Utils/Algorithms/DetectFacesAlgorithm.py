@@ -6,6 +6,7 @@ from Utils.Algorithms.AlgorithmResponses.DetectFacesResponse import DetectFacesR
 
 import numpy as np
 
+
 class DetectFacesAlgorithm(Algorithm):
 
     def __init__(self, model_path, prototxt_path, min_confidence=0.3):
@@ -25,7 +26,6 @@ class DetectFacesAlgorithm(Algorithm):
         image = np.array(request_message.data, dtype=np.uint8)
         blob = cv2.dnn.blobFromImage(image, 1.0, (300, 300), (104.0, 177.0, 123.0))
         h, w = request_message.getOriginalImageShape()
-
 
         with self.model_lock:
 

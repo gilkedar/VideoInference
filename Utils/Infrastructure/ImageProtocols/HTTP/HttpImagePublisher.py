@@ -14,14 +14,12 @@ class HttpImagePublisher(ImagePublisher):
         self.api = api
 
     def publish(self,message):
-        address = 'http://{}:{}/{}'.format(self.ip, self.port, self.api)
+        address = 'http://{}:{}{}'.format(self.ip, self.port, self.api)
 
         headers = {'content-type': 'application/json'}
         # content_type = 'image/jpeg'
         # headers = {'content-type': content_type}
 
-        response = requests.post(address, data=self.protocol.encodeMessage(message), headers=headers)
-
-        # decode response
-
-        print(response.text)
+        requests.post(address, data=self.protocol.encodeMessage(message), headers=headers)
+        # image_response = self.protocol.decodeResponse(response)
+        # return image_response
