@@ -6,6 +6,7 @@ import cv2
 import threading
 import requests
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--ip", type=str, required=True, help="ip address of the device")
@@ -38,9 +39,14 @@ def gen():
     vs = VideoStream(src=0).start()
     time.sleep(2.0)
     address = "http://{}:{}{}".format(args["ip"], args["port"], args["api"])
-    while True:
-        frame = vs.read()
-        threading.Thread(target=publish_image(frame, address)).start()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+
+        while True:
+            frame = vs.read()
+             # threading.Thread(target=publish_image(frame, address)).start()
+            future = executor.submit(publish_image, (frame,address))
+            print(future)
 
 
 if __name__ == '__main__':
