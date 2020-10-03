@@ -59,11 +59,11 @@ class HttpMainServer:
             output_frame = self.getOutputImage()
             if output_frame is None:
                 continue
-            encoded_image= self.frame_editor.encode_to_jpg(output_frame)
-            if not encoded_image:
-                continue
-            yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
-                   bytearray(encoded_image) + b'\r\n')
+            encoded_image = self.frame_editor.encode_to_jpg(output_frame)
+            if encoded_image is not None:
+                yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                       bytearray(encoded_image) + b'\r\n')
+
 
     def run(self):
         self.logger.info("Initializing Resources...")

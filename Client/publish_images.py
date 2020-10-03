@@ -14,6 +14,7 @@ ap.add_argument("-a", "--api", type=str, required=False,default="", help="enter 
 args = vars(ap.parse_args())
 
 request_id = 0
+request_lock = threading.Lock()
 
 
 def publish_image(frame, address):
@@ -27,9 +28,10 @@ def publish_image(frame, address):
     # resized_frame = imutils.resize(frame, width=400)
     (flag, encodedImage) = cv2.imencode(".jpg", frame)
     bytes_str = encodedImage.tostring()
-    requests.post(address, data=bytes_str, headers=headers)
+    with request_lock:
+        requests.post(address, data=bytes_str, headers=headers)
+        print(request_id)
 
-    print(request_id)
 
 def gen():
     """Video streaming generator function."""
