@@ -16,38 +16,42 @@ ap.add_argument("-p", "--port", type=str, required=True, help="ephemeral port nu
 ap.add_argument("-a", "--api", type=str, required=False,default="", help="enter the desired API uri")
 args = vars(ap.parse_args())
 
-request_lock = threading.Lock()
-last_frame = None
+# request_lock = threading.Lock()
+# last_frame = None
+
 headers = {'content-type': 'image/jpeg',
            'user_id': "gilkedar",
-           'algorithm': "detect_faces"}  # resized_frame = imutils.resize(frame, width=400)
-# address = "http://{}:{}{}".format(args["ip"], args["port"], args["api"])
-address = args["ip"]
+           'algorithm': "detect_faces"}
+address = "http://{}:{}{}".format(args["ip"], args["port"], args["api"])
+# address = args["ip"]
 request_id = 0
 
-def publish_image():
-    global headers
-    global request_id
 
-    if last_frame:
-        with request_lock:
-            data, frame_num = last_frame[0], last_frame[1]
-            request_id += 1
-            headers['request_id'] = "{} - {}".format(request_id, datetime.datetime.now().strftime("%H:%M:%S.%f"))
-            print(f"{request_id}/{frame_num}")
-        if data:
-            start_time = time.time()  # start time of the loop
-            ans = requests.post(address, data=data, headers=headers)
-            print(ans)
-            print("FPS: ", 1.0 / (time.time() - start_time))  # FPS = 1 / time to process loop
-
+# def publish_image():
+#     global headers
+#     global request_id
+#
+#     if last_frame:
+#         with request_lock:
+#             data, frame_num = last_frame[0], last_frame[1]
+#             request_id += 1
+#             headers['request_id'] = "{} - {}".format(request_id, datetime.datetime.now().strftime("%H:%M:%S.%f"))
+#             print(f"{request_id}/{frame_num}")
+#         if data:
+#             start_time = time.time()  # start time of the loop
+#             ans = requests.post(address, data=data, headers=headers)
+#             print(ans)
+#             print("FPS: ", 1.0 / (time.time() - start_time))  # FPS = 1 / time to process loop
+#
 
 def publish_image(frame, frame_id):
     global headers
     headers['request_id'] = "{} - {}".format(frame_id, datetime.datetime.now().strftime("%H:%M:%S.%f"))
-    print(f"{request_id}/{frame_id}")
+    print(f"publishing {frame_id}")
     ans = requests.post(address, data=frame, headers=headers)
     print(ans)
+    print(ans.text)
+
 
 def gen():
     """Video streaming generator function."""
@@ -69,8 +73,7 @@ def gen():
         #     print("sending {} ".format(counter))
         #     executor.submit(publish_image, data=bytes_str, address=address, frame_num=counter)
         # time.sleep(0.025)
-
-
+        
 
 if __name__ == '__main__':
     gen()
