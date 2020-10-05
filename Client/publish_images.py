@@ -6,6 +6,8 @@ import cv2
 import threading
 import requests
 import argparse
+import datetime
+
 from concurrent.futures import ThreadPoolExecutor
 
 ap = argparse.ArgumentParser()
@@ -14,39 +16,60 @@ ap.add_argument("-p", "--port", type=str, required=True, help="ephemeral port nu
 ap.add_argument("-a", "--api", type=str, required=False,default="", help="enter the desired API uri")
 args = vars(ap.parse_args())
 
-request_id = 0
 request_lock = threading.Lock()
+last_frame = None
+headers = {'content-type': 'image/jpeg',
+           'user_id': "gilkedar",
+           'algorithm': "detect_faces"}  # resized_frame = imutils.resize(frame, width=400)
+# address = "http://{}:{}{}".format(args["ip"], args["port"], args["api"])
+address = args["ip"]
+request_id = 0
 
-
-def publish_image(frame, address):
+def publish_image():
+    global headers
     global request_id
-    request_id += 1
-    content_type = 'image/jpeg'
-    headers = {'content-type': content_type,
-               'user_id': "gilkedar",
-               'algorithm': "detect_faces",
-               'request_id': str(request_id)}
-    # resized_frame = imutils.resize(frame, width=400)
-    (flag, encodedImage) = cv2.imencode(".jpg", frame)
-    bytes_str = encodedImage.tostring()
-    with request_lock:
-        requests.post(address, data=bytes_str, headers=headers)
-        print(request_id)
 
+    if last_frame:
+        with request_lock:
+            data, frame_num = last_frame[0], last_frame[1]
+            request_id += 1
+            headers['request_id'] = "{} - {}".format(request_id, datetime.datetime.now().strftime("%H:%M:%S.%f"))
+            print(f"{request_id}/{frame_num}")
+        if data:
+            start_time = time.time()  # start time of the loop
+            ans = requests.post(address, data=data, headers=headers)
+            print(ans)
+            print("FPS: ", 1.0 / (time.time() - start_time))  # FPS = 1 / time to process loop
+
+
+def publish_image(frame, frame_id):
+    global headers
+    headers['request_id'] = "{} - {}".format(frame_id, datetime.datetime.now().strftime("%H:%M:%S.%f"))
+    print(f"{request_id}/{frame_id}")
+    ans = requests.post(address, data=frame, headers=headers)
+    print(ans)
 
 def gen():
     """Video streaming generator function."""
+    global last_frame
     vs = VideoStream(src=0).start()
-    time.sleep(2.0)
-    address = "http://{}:{}{}".format(args["ip"], args["port"], args["api"])
+    # time.sleep(2.0)
+    counter = 0
+    while True:
+        start_time = time.time()  # start time of the loop
+        frame = vs.read()
+        # resized = cv2.resize(frame, (10,10))
+        (flag, encodedImage) = cv2.imencode(".jpg", frame)
+        bytes_str = encodedImage.tostring()
+        counter += 1
+        publish_image(bytes_str, counter)
+        print("FPS: ", 1.0 / (time.time() - start_time))  # FPS = 1 / time to process loop
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
+        # with ThreadPoolExecutor(max_workers=2) as executor:
+        #     print("sending {} ".format(counter))
+        #     executor.submit(publish_image, data=bytes_str, address=address, frame_num=counter)
+        # time.sleep(0.025)
 
-        while True:
-            frame = vs.read()
-             # threading.Thread(target=publish_image(frame, address)).start()
-            future = executor.submit(publish_image, (frame,address))
-            print(future)
 
 
 if __name__ == '__main__':
