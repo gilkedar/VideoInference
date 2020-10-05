@@ -71,15 +71,15 @@ class HttpMainServer:
         self.logger.info("Ready for incoming requests...")
 
 
-@app.route("/video_feed")
-def video_feed():
-    # return the response generated along with the specific media
-    # type (mime type)
-    return Response(http_main_server.genearteOutputImage(),
-                    mimetype="multipart/x-mixed-replace; boundary=frame")
+# @app.route("/video_feed")
+# def video_feed():
+#     # return the response generated along with the specific media
+#     # type (mime type)
+#     return Response(http_main_server.genearteOutputImage(),
+#                     mimetype="multipart/x-mixed-replace; boundary=frame")
+#
 
-
-@app.route("/user", methods=['POST'])
+@app.route("/", methods=['GET'])
 def video_func():
 
     try:
@@ -88,9 +88,9 @@ def video_func():
         request_msg = http_main_server.requests_subscriber.decodeIncomingRequest(r)
         # threading.Thread(target=http_main_server.response_manager.handleNewRequest, args=(request_msg,)).start()
         response = http_main_server.requests_manager.handleNewRequest(request_msg)
-        http_main_server.updateOutputImage(response.updated_frame)
-        return Response(response=f"Success - Request {response.request_id} ",
-                        status=200,
+        # http_main_server.updateOutputImage(response.updated_frame)
+        return Response(response=response.toJSON(),
+                        status=222,
                         mimetype="application/json")
     except Exception as ex:
         http_main_server.logger.error(f"SERVER ERROR : {ex} ")
@@ -99,10 +99,10 @@ def video_func():
                         mimetype="text/plain")
 
 
-@app.route("/")
-def func():
-
-    return render_template("index.html")
+# @app.route("/")
+# def func():
+#
+#     return render_template("index.html")
 
 
 if __name__ == "__main__":

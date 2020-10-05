@@ -30,6 +30,6 @@ class Algorithm:
     def generateResponseMessage(self, request_message, ans):
         request_id = request_message.request_id
         serialized_ans = ans.serialize()
-        original_frame = request_message.data
-        updated_frame = self.updateFrame(original_frame, ans)
-        return ImageResponseMessage(request_id=request_id, algorithm=self.name, ans=serialized_ans, updated_frame=updated_frame)
+        # original_frame = request_message.data
+        # updated_frame = self.updateFrame(original_frame, ans)
+        return ImageResponseMessage(request_id=request_id, algorithm=self.name, ans=serialized_ans)
