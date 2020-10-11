@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get install -y python3-pip python3-dev
 
 WORKDIR /
 
-COPY . /
+COPY requirements.txt /
 
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
@@ -20,6 +20,8 @@ ENV MQTT_TOKEN_IP=amqp://wksnlndm:v7PjBqPlqjI2xDlFsgFaQx2EL4hqAq27@roedeer.rmq.c
 ENV PYTHONPATH=.
 
 ENTRYPOINT [ "python3", "Server/AlgorithmHttpServer.py" ]
+
+COPY . /
 
 EXPOSE 5000
 
