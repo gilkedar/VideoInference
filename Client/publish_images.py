@@ -1,5 +1,3 @@
-from flask import Flask, render_template, Response
-# Raspberry Pi camera module (requires picamera package, developed by Miguel Grinberg)
 from imutils.video import VideoStream
 import time
 import cv2
@@ -7,8 +5,11 @@ import threading
 import requests
 import argparse
 import datetime
+import base64
 
 from concurrent.futures import ThreadPoolExecutor
+
+# -i https://6mfe1xgzk9.execute-api.eu-central-1.amazonaws.com/dev/detect-faces -p 5000
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--ip", type=str, required=True, help="ip address of the device")
@@ -19,11 +20,11 @@ args = vars(ap.parse_args())
 # request_lock = threading.Lock()
 # last_frame = None
 
-headers = {'content-type': 'image/jpeg',
+headers = {'Content-Type': 'image/jpeg',
            'user_id': "gilkedar",
            'algorithm': "detect_faces"}
-address = "http://{}:{}{}".format(args["ip"], args["port"], args["api"])
-# address = args["ip"]
+# address = "http://{}:{}{}".format(args["ip"], args["port"], args["api"])
+address = args["ip"]
 request_id = 0
 
 
@@ -48,7 +49,8 @@ def publish_image(frame, frame_id):
     global headers
     headers['request_id'] = "{} - {}".format(frame_id, datetime.datetime.now().strftime("%H:%M:%S.%f"))
     print(f"publishing {frame_id}")
-    ans = requests.post(address, data=frame, headers=headers)
+    print(type(frame))
+    ans = requests.get(address, data=frame, headers=headers)
     print(ans)
     print(ans.text)
 
@@ -64,6 +66,7 @@ def gen():
         frame = vs.read()
         # resized = cv2.resize(frame, (10,10))
         (flag, encodedImage) = cv2.imencode(".jpg", frame)
+        # bytes_str = base64.b64encode(encodedImage)
         bytes_str = encodedImage.tostring()
         counter += 1
         publish_image(bytes_str, counter)
