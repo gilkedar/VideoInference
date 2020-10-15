@@ -71,13 +71,14 @@ class HttpMainServer:
         self.logger.info("Ready for incoming requests...")
 
 
-# @app.route("/video_feed")
-# def video_feed():
-#     # return the response generated along with the specific media
-#     # type (mime type)
-#     return Response(http_main_server.genearteOutputImage(),
-#                     mimetype="multipart/x-mixed-replace; boundary=frame")
-#
+@app.route("/video_feed")
+def video_feed():
+    # return the response generated along with the specific media
+    # type (mime type)
+    return Response(http_main_server.genearteOutputImage(),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
+
+
 
 @app.route("/", methods=['GET'])
 def video_func():
@@ -94,15 +95,15 @@ def video_func():
                         mimetype="application/json")
     except Exception as ex:
         http_main_server.logger.error(f"SERVER ERROR : {ex} ")
-        return Response(response=f"Failed - Request {response.request_id} - {ex}",
+        return Response(response=f"Failed - Request  - {ex.message}",
                         status=444,
                         mimetype="text/plain")
 
 
-# @app.route("/")
-# def func():
-#
-#     return render_template("index.html")
+@app.route("/test")
+def func():
+
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
